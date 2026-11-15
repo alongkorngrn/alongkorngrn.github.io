@@ -12,6 +12,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <style>
 :root{
   --brand:#35654E; --navy:#35654E; --accent:#A9947A; --moss:#789474; --linen:#E2E0D8; --neutral:#BCBEC0;
@@ -197,9 +198,15 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 .cl-cat .caret{transition:transform .2s;color:var(--mute)}
 .cl-cat.collapsed .caret{transform:rotate(-90deg)}
 .cl-cat.collapsed .cl-body{display:none}
-.cl-item{display:grid;grid-template-columns:44px minmax(0,1.5fr) 150px 150px minmax(0,1fr);gap:10px;align-items:center;padding:9px 18px;border-top:1px solid var(--line2)}
+.cl-item{display:grid;grid-template-columns:44px minmax(0,1.5fr) 150px 150px minmax(0,1fr) 26px;gap:10px;align-items:center;padding:9px 18px;border-top:1px solid var(--line2)}
 .cl-item:first-child{border-top:0}
 .cl-item.r-O{background:#fff6f5}
+.cl-del{border:0;background:none;color:#c3c0b8;cursor:pointer;width:26px;height:26px;border-radius:7px}
+.cl-del:hover{background:var(--bad-l);color:var(--bad)}
+.cl-acts{display:flex;flex-direction:column;gap:2px;align-items:center}.cl-ed:hover{background:var(--brand-l)!important;color:var(--brand)!important}
+.cl-add{padding:10px 18px;border-top:1px solid var(--line2);background:#faf9f6}
+.pon.bulk button{width:auto;padding:0 9px;font-size:11.5px;height:28px}
+.pon.bulk button[data-r=P]:hover{background:var(--ok-l);color:var(--ok)}.pon.bulk button[data-r=O]:hover{background:var(--bad-l);color:var(--bad)}.pon.bulk button[data-r=NA]:hover{background:#eef1f6}
 .cl-item .no{font-weight:600;color:var(--navy);font-size:13px}
 .cl-item .task{font-weight:500;font-size:13.5px}
 .cl-item .crit{font-size:12px;color:var(--mute);margin-top:2px}
@@ -225,6 +232,9 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 
 .sc-item{display:grid;grid-template-columns:44px minmax(0,1fr) auto 90px minmax(0,.8fr);gap:12px;align-items:center;padding:10px 18px;border-top:1px solid var(--line2)}
 .sc-item .no{font-weight:600;color:var(--navy)}
+.sc-item.sc-edit{grid-template-columns:44px minmax(0,1fr) auto 110px 40px;background:#fcfbf8}
+.sc-bar.editing{border-color:var(--brand);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 15%,transparent)}
+.sc-cat .card-h .inp{font-weight:600}
 .stepper{display:inline-flex;align-items:center;border:1px solid #d5dce6;border-radius:9px;overflow:hidden;background:#fff}
 .stepper button{width:30px;height:34px;border:0;background:#f6f5f1;cursor:pointer;font-size:15px;color:var(--ink2)}
 .stepper button:hover{background:#eceff5}
@@ -255,6 +265,31 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 .minibar{height:6px;background:#eef1f6;border-radius:4px;overflow:hidden;margin-top:4px}
 .minibar i{display:block;height:100%;background:var(--brand);border-radius:4px}
 
+/* audit plan */
+.au-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}
+.au-dh{padding:9px 8px;font-size:12px;font-weight:600;color:var(--ink2);background:#f6f5f1;border-bottom:1px solid var(--line);text-align:center}
+.au-dh.aud{background:var(--brand);color:#fff}
+.au-cell{min-height:128px;border-right:1px solid var(--line2);border-bottom:1px solid var(--line2);padding:6px;display:flex;flex-direction:column;gap:5px;min-width:0}
+.au-cell:nth-child(7n){border-right:0}
+.au-cell.out{background:#faf9f6}
+.au-cell.wk{background:#fbfaf7}
+.au-cell.aud{background:color-mix(in srgb,var(--brand) 5%,#fff);cursor:pointer}
+.au-cell.today .au-dn span:first-child{background:var(--brand);color:#fff;border-radius:50%;width:24px;height:24px;display:inline-grid;place-items:center}
+.au-dn{display:flex;align-items:center;gap:5px;font-weight:600;font-size:13px;flex-wrap:wrap}
+.au-hol{font-size:10.5px;font-weight:500;color:var(--bad);background:var(--bad-l);border-radius:6px;padding:1px 6px}
+.au-run{margin-left:auto;font-size:10.5px;font-weight:500;color:#7d6a4f;background:#f1ece2;border-radius:6px;padding:1px 6px}
+.au-card{border:1px solid var(--line);border-left:4px solid var(--info);border-radius:9px;padding:6px 7px;background:#fff;font-size:11.5px;cursor:pointer;display:flex;flex-direction:column;gap:2px;box-shadow:var(--sh);min-width:0}
+.au-card:hover{border-color:var(--brand)}
+.au-card.st-done{border-left-color:var(--ok)}.au-card.st-postponed{border-left-color:var(--warn)}.au-card.st-cancelled{border-left-color:var(--neutral);opacity:.6}
+.au-card.stale{border-color:#eba59e}
+.au-top{display:flex;gap:4px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.au-top .badge{font-size:10.5px;padding:1px 7px}
+.au-p{font-size:12.5px;line-height:1.3;overflow:hidden;text-overflow:ellipsis}
+.au-d{color:#7d6a4f;font-size:11px;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.au-l{color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.au-l i{width:12px;color:var(--mute)}
+.au-empty{margin-top:auto;font-size:11.5px;color:var(--mute);border:1px dashed var(--line);border-radius:8px;padding:6px;text-align:center}
+@media (max-width:900px){.au-grid{grid-template-columns:1fr}.au-dh{display:none}.au-cell.out,.au-cell:not(.aud):not(:has(.au-card)){display:none}.au-cell{min-height:auto}}
 /* team manager */
 .team-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
 .team-card{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;background:#fff}
@@ -315,7 +350,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 #offstage{position:fixed;left:-10000px;top:0;width:900px}
 
 /* ---------- Responsive ---------- */
-@media (max-width:1280px){.g-kpi,.g-k5{grid-template-columns:repeat(3,minmax(0,1fr))}.cl-item{grid-template-columns:40px minmax(0,1fr) 150px 150px}.cl-item .note{grid-column:2/-1}}
+@media (max-width:1280px){.g-kpi,.g-k5{grid-template-columns:repeat(3,minmax(0,1fr))}.cl-item{grid-template-columns:40px minmax(0,1fr) 150px 150px 26px}.cl-item .note{grid-column:2/-2}.cl-item .cl-acts{grid-row:1;grid-column:-2/-1}}
 @media (max-width:1100px){.pm-layout{grid-template-columns:1fr}.pm-side{position:static;order:2}.ic-r2{grid-template-columns:1fr 1fr}.ic-r2 .wide{grid-column:1/-1}}
 @media (max-width:640px){.ic-r1{grid-template-columns:1fr 36px}.ic-r1 .wide,.ic-r1 .loc{grid-column:1/-1}}
 @media (max-width:960px){
@@ -332,8 +367,8 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
   .content{padding:16px}.topbar{padding:0 16px}
   .g-kpi,.g-k4,.g-k5{grid-template-columns:1fr 1fr}
   .fgrid,.fgrid.f2,.fgrid.f3{grid-template-columns:minmax(0,1fr)}.fgrid .span2{grid-column:auto}
-  .cl-item{grid-template-columns:36px 1fr;}.cl-item .pon-w,.cl-item .meas-w,.cl-item .note{grid-column:2/-1}
-  .sc-item{grid-template-columns:36px 1fr auto}.sc-item .rm{grid-column:2/-1}
+  .cl-item{grid-template-columns:36px 1fr 26px;}.cl-item .cl-acts{grid-row:1;grid-column:3}.cl-cat .card-h{flex-wrap:wrap}.cl-cat .card-h .right{flex-wrap:wrap}.cl-item .pon-w,.cl-item .meas-w,.cl-item .note{grid-column:2/-1}
+  .sc-item{grid-template-columns:36px 1fr auto}.sc-item .rm{grid-column:2/-1}.sc-item.sc-edit{grid-template-columns:36px 1fr 40px}.sc-item.sc-edit>.row{grid-column:2/3}.sc-item.sc-edit>span{display:none}
   .kpi .k-val{font-size:23px}
   .topbar h2{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw}
   .save-chip{padding:7px}
@@ -351,11 +386,11 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
       <div class="nav-item" data-tab="dashboard"><i class="fa-solid fa-chart-line"></i>Executive Dashboard</div>
       <div class="nav-label">งานบำรุงรักษา</div>
       <div class="nav-item" data-tab="pm"><i class="fa-solid fa-clipboard-check"></i>บันทึกงาน PM<span class="nav-badge hidden" id="nb-draft" title="มีแบบร่างที่ยังไม่บันทึก">•</span></div>
+      <div class="nav-item" data-tab="audit"><i class="fa-solid fa-calendar-check"></i>แผนสุ่มตรวจหน้างาน</div>
       <div class="nav-item" data-tab="records"><i class="fa-solid fa-folder-open"></i>ประวัติงาน PM</div>
       <div class="nav-item" data-tab="people"><i class="fa-solid fa-user-check"></i>คุณภาพรายบุคคล</div>
       <div class="nav-item" data-tab="issues"><i class="fa-solid fa-triangle-exclamation"></i>ปัญหาที่พบ (Issues)<span class="nav-badge hidden" id="nb-issues"></span></div>
       <div class="nav-item" data-tab="cm"><i class="fa-solid fa-screwdriver-wrench"></i>งานแก้ไข (CM)<span class="nav-badge hidden" id="nb-cm"></span></div>
-      <div class="nav-item" data-tab="roster"><i class="fa-solid fa-users-gear"></i>Manpower Roster</div>
       <div class="nav-label">ระบบ</div>
       <div class="nav-item" data-tab="reports"><i class="fa-solid fa-database"></i>รายงาน &amp; สำรองข้อมูล</div>
       <div class="nav-item" data-tab="settings"><i class="fa-solid fa-sliders"></i>ตั้งค่า</div>
@@ -434,6 +469,9 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
         </div>
       </section>
 
+      <!-- ============ AUDIT PLAN ============ -->
+      <section class="view" id="v-audit"></section>
+
       <!-- ============ RECORDS ============ -->
       <section class="view" id="v-records">
         <div class="card">
@@ -488,27 +526,6 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
             <div class="card-h"><h3>รายการงาน CM</h3>
               <div class="right"><select class="inp sm" id="cf-status" style="width:auto"><option value="open">ยังไม่ปิด</option><option value="">ทั้งหมด</option><option>Closed</option></select></div></div>
             <div class="tbl-wrap" id="cm-table"></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ============ ROSTER ============ -->
-      <section class="view" id="v-roster">
-        <div class="card">
-          <div class="card-h" style="flex-wrap:wrap">
-            <h3><i class="fa-solid fa-calendar-week" style="color:var(--brand)"></i> Weekly Roster Allocation</h3>
-            <div class="right">
-              <button class="btn btn-sm btn-icon" onclick="rosterWeek(-1)" title="สัปดาห์ก่อน"><i class="fa-solid fa-chevron-left"></i></button>
-              <span class="badge b-navy num" id="ro-week" style="font-size:12.5px;padding:6px 12px"></span>
-              <button class="btn btn-sm btn-icon" onclick="rosterWeek(1)" title="สัปดาห์ถัดไป"><i class="fa-solid fa-chevron-right"></i></button>
-              <button class="btn btn-sm" onclick="rosterWeek(0)">สัปดาห์นี้</button>
-            </div>
-          </div>
-          <div class="tbl-wrap" id="ro-table"></div>
-          <div class="card-b row" style="border-top:1px solid var(--line2)">
-            <button class="btn btn-sm" onclick="rosterAdd()"><i class="fa-solid fa-plus"></i> เพิ่มแถว</button>
-            <button class="btn btn-sm" onclick="rosterCopyPrev()"><i class="fa-regular fa-copy"></i> คัดลอกจากสัปดาห์ก่อน</button>
-            <span class="muted small" style="margin-left:auto">พิมพ์ "Standby" = สีแดง · "Leave/ลา/HQ Meeting" = สีเทา · บันทึกอัตโนมัติ</span>
           </div>
         </div>
       </section>
@@ -665,6 +682,11 @@ const CL = [
 ].map(c=>({...c,items:c.items.map(([no,task,crit,unit,range])=>({no,task,crit,unit:unit||'',range:range||null}))}));
 const CL_ITEMS = CL.flatMap(c=>c.items.map(it=>({...it,cat:c.id})));
 const CL_TOTAL = CL_ITEMS.length;
+const noKey = no => { const [a,b]=String(no).split('.').map(Number); return a*1000+(b||0); };
+function templateItems(){ const s=db.settings; const rm=new Set(s.clRemoved||[]); return [...CL_ITEMS.filter(i=>!rm.has(i.no)), ...(s.clAdded||[])].sort((a,b)=>noKey(a.no)-noKey(b.no)); }
+function jobItems(j){ return (j && Array.isArray(j.clDef)) ? j.clDef : CL_ITEMS; }
+function jobCats(j){ const items=jobItems(j); return CL.map(c=>({...c,items:items.filter(i=>i.cat===c.id)})); }
+function nextItemNo(cat,j){ const all=[...CL_ITEMS,...jobItems(j),...(db.settings.clAdded||[])].filter(i=>i.cat===cat); const mx=all.reduce((m,i)=>Math.max(m,+String(i.no).split('.')[1]||0),0); return `${cat}.${mx+1}`; }
 const SEVERITY = ['สูง','กลาง','ต่ำ'];
 const ISSUE_STATUS = ['รอดำเนินการ','ยังไม่แก้','แก้แล้ว'];
 
@@ -691,6 +713,11 @@ const SC = [
   {no:'5.2',task:'ผ่านการ Review และพร้อมจัดส่งลูกค้าตามกำหนด',ev:'บันทึกผล Review / วันที่ส่งลูกค้า',max:5}]}];
 const FIELD_MAX = 90, REPORT_MAX = 10;
 const SC_ITEMS = SC.flatMap(c=>c.items.map(it=>({...it,cat:c.id})));
+function defaultScDef(){ return SC.map(c=>({id:c.report?'rep':'d'+c.id,name:c.name,report:!!c.report,items:c.items.map(it=>({key:it.no,task:it.task,ev:it.ev,max:it.max}))})); }
+const DEFAULT_SC_DEF = defaultScDef();
+function templateScDef(){ const t=db&&db.settings&&db.settings.scTemplate; return Array.isArray(t)&&t.length ? clone(t) : defaultScDef(); }
+function jobScDef(j){ return (j&&j.sc&&Array.isArray(j.sc.def)) ? j.sc.def : DEFAULT_SC_DEF; }
+const r1 = x => Math.round(x*10)/10;
 const PENALTIES = [
  {key:'rework',name:'Rework',th:'งานไม่เรียบร้อย',desc:'หลักฐานไม่ชัดเจน รูปเบลอ ไม่มี GPS หรือลืมแต้มสีบางจุด',cond:'หักเมื่อพบข้อบกพร่องแต่แก้ไขได้',pts:10},
  {key:'audit',name:'Audit Fail',th:'ตกประเมินหน้างาน',desc:'Senior สุ่มตรวจหน้างานพบว่าทำไม่ตรงกับรายงาน',cond:'หักเมื่อพบความไม่สอดคล้องรุนแรง',pts:20},
@@ -751,38 +778,40 @@ let ui = { tab:'dashboard', step:1, roWeek:null, dash:{period:'6m',team:''}, cmE
 const charts = {};
 
 function defaultDB(){
-  return { app:'greenergy-om', version:2, settings:clone(DEFAULT_SETTINGS), jobs:[], cm:[], roster:{}, meta:{created:new Date().toISOString(), lastSaved:null, lastBackup:null, nickCleaned:true} };
+  return { app:'greenergy-om', version:2, settings:clone(DEFAULT_SETTINGS), jobs:[], cm:[], roster:{}, audits:[], meta:{created:new Date().toISOString(), lastSaved:null, lastBackup:null, nickCleaned:true} };
 }
 function newJobObj(){
   const s = db.settings;
   return { id:null, sample:false, createdAt:null, updatedAt:null,
     info:{site:'',type:'Solar Rooftop',capacity:'',invQty:'',date:todayISO(),endDate:'',start:'',end:'',supervisor:'',team:'',weather:[],members:[]},
     pre:Array(PRE_CHECKS.length).fill(false), post:Array(POST_CHECKS.length).fill(false),
-    cl:{}, issues:[],
+    cl:{}, clDef:clone(templateItems()), issues:[],
     sign:{perf:'',check:'',approve:''},
-    sc:{evaluator:s.manager||'',evalDate:'',auditType:'online',items:{},pen:{rework:false,audit:false,fraud:false},penRemark:'',reviewer:'',reviewDate:'',sentDate:''} };
+    sc:{def:templateScDef(),evaluator:s.manager||'',evalDate:'',auditType:'online',items:{},pen:{rework:false,audit:false,fraud:false},penRemark:'',reviewer:'',reviewDate:'',sentDate:''} };
 }
 
 /* ---------- Calculations ---------- */
 function calcSC(sc){
-  let gross=0, scoredF=0, scoredR=0, fieldGross=0, repGross=0;
-  const cats=SC.map(c=>{ let s=0; c.items.forEach(it=>{ const v=sc?.items?.[it.no]; if(v && v.s!=='' && v.s!=null){ s+=+v.s; if(c.report) scoredR++; else scoredF++; } }); gross+=s; if(c.report) repGross+=s; else fieldGross+=s; return {id:c.id,score:s,max:c.weight}; });
+  const def=(sc&&Array.isArray(sc.def))?sc.def:DEFAULT_SC_DEF;
+  let fGot=0,fMax=0,rGot=0,rMax=0,nF=0,nR=0,sF=0,sR=0;
+  const cats=def.map(c=>{ let s=0,m=0; c.items.forEach(it=>{ m+=+it.max||0; const v=sc?.items?.[it.key]; const has=v&&v.s!==''&&v.s!=null; if(has) s+=+v.s; if(c.report){ nR++; if(has) sR++; } else { nF++; if(has) sF++; } });
+    if(c.report){ rGot+=s; rMax+=m; } else { fGot+=s; fMax+=m; } return {id:c.id,name:c.name,report:!!c.report,score:s,max:m}; });
+  const fieldGross = fMax ? r1(fGot/fMax*FIELD_MAX) : 0, repGross = rMax ? r1(rGot/rMax*REPORT_MAX) : 0;
   const ded = PENALTIES.reduce((a,p)=>a+(sc?.pen?.[p.key]?p.pts:0),0);
-  const net = Math.max(0,gross-ded);
-  const nF=SC_ITEMS.filter(i=>i.cat!==5).length, nR=SC_ITEMS.length-nF;
-  const fieldDone = scoredF===nF, repDone = scoredR===nR, complete = fieldDone && repDone;
+  const gross=r1(fieldGross+repGross), net=Math.max(0,r1(gross-ded));
+  const fieldDone = nF>0 && sF===nF, repDone = sR===nR, complete = fieldDone && repDone;
   const status = complete ? (net>=db.settings.passMark?'PASS':'FAIL') : fieldDone ? 'REPORT' : 'WAIT';
-  return {gross,fieldGross,repGross,ded,net,scored:scoredF+scoredR,fieldDone,repDone,complete,cats,status};
+  return {gross,fieldGross,repGross,fieldRaw:fGot,fieldMax:fMax,repRaw:rGot,repMax:rMax,ded,net,scored:sF+sR,fieldDone,repDone,complete,cats,status};
 }
 function calcCL(j){
   let P=0,O=0,NA=0; const byCat={};
-  CL_ITEMS.forEach(it=>{ const r=j.cl?.[it.no]?.r; if(r==='P')P++; else if(r==='O'){O++; byCat[it.cat]=(byCat[it.cat]||0)+1;} else if(r==='NA')NA++; });
+  const items=jobItems(j); items.forEach(it=>{ const r=j.cl?.[it.no]?.r; if(r==='P')P++; else if(r==='O'){O++; byCat[it.cat]=(byCat[it.cat]||0)+1;} else if(r==='NA')NA++; });
   const done=P+O+NA;
-  return {P,O,NA,done,total:CL_TOTAL,pct:done/CL_TOTAL*100,passRate:(P+O)?P/(P+O)*100:null,byCat,
+  return {P,O,NA,done,total:items.length,pct:items.length?done/items.length*100:0,passRate:(P+O)?P/(P+O)*100:null,byCat,
     pre:j.pre.filter(Boolean).length, post:j.post.filter(Boolean).length};
 }
 function jobCalc(j){
-  if(j.legacy) return {cl:{P:0,O:0,NA:0,done:0,total:CL_TOTAL,pct:0,passRate:null,byCat:{},pre:0,post:0}, sc:{gross:j.legacy.score,fieldGross:j.legacy.score,repGross:0,ded:0,net:j.legacy.score,scored:SC_ITEMS.length,fieldDone:true,repDone:true,complete:true,cats:[],status:j.legacy.status}};
+  if(j.legacy) return {cl:{P:0,O:0,NA:0,done:0,total:CL_TOTAL,pct:0,passRate:null,byCat:{},pre:0,post:0}, sc:{gross:j.legacy.score,fieldGross:j.legacy.score,repGross:0,fieldRaw:j.legacy.score,fieldMax:90,repRaw:0,repMax:10,ded:0,net:j.legacy.score,scored:SC_ITEMS.length,fieldDone:true,repDone:true,complete:true,cats:[],status:j.legacy.status}};
   return {cl:calcCL(j), sc:calcSC(j.sc)};
 }
 function slaDue(t){ if(!t.reported) return null; const h=db.settings.sla[t.priority]||24; return new Date(new Date(t.reported).getTime()+h*3600e3); }
@@ -826,8 +855,8 @@ function normalize(obj){
   const d=defaultDB();
   const out={...d,...obj,settings:{...d.settings,...(obj.settings||{}),sla:{...d.settings.sla,...(obj.settings?.sla||{})}},meta:{...d.meta,...(obj.meta||{})}};
   if(/^#10b981$/i.test(out.settings.primary) && /^#1f3864$/i.test(out.settings.secondary)){ out.settings.primary='#35654E'; out.settings.secondary='#A9947A'; }
-  out.cm=out.cm||[]; delete out.kpi; out.roster=out.roster||{};
-  out.jobs=out.jobs.map(j=>{ const b=newJobObjFor(out); return {...b,...j,info:{...b.info,...j.info},sign:{...b.sign,...j.sign},sc:{...b.sc,...j.sc,pen:{...b.sc.pen,...(j.sc?.pen||{})}},issues:j.issues||[],cl:j.cl||{},pre:j.pre||b.pre,post:j.post||b.post}; });
+  out.cm=out.cm||[]; out.audits=Array.isArray(out.audits)?out.audits:[]; delete out.kpi; out.roster=out.roster||{};
+  out.jobs=out.jobs.map(j=>{ const b=newJobObjFor(out); return {...b,...j,info:{...b.info,...j.info},sign:{...b.sign,...j.sign},sc:{...b.sc,...j.sc,def:Array.isArray(j.sc?.def)?j.sc.def:(j.id?defaultScDef():b.sc.def),pen:{...b.sc.pen,...(j.sc?.pen||{})}},clDef:Array.isArray(j.clDef)?j.clDef:(j.id?clone(CL_ITEMS):b.clDef),issues:j.issues||[],cl:j.cl||{},pre:j.pre||b.pre,post:j.post||b.post}; });
   out.meta.nickCleaned=!!(obj.meta&&obj.meta.nickCleaned);
   migrateTeams(out);
   return out;
@@ -876,7 +905,6 @@ async function loadDB(){
   let legacy=null; try{ legacy=localStorage.getItem(LEGACY_KEY); }catch(e){}
   if(legacy){ try{ const L=JSON.parse(legacy); (L.records||[]).forEach(r=>db.jobs.push(legacyToJob(r))); if(db.jobs.length) setTimeout(()=>toast(`ย้ายข้อมูลจาก Dashboard เดิม ${db.jobs.length} รายการแล้ว`,'ok'),800); }catch(e){} }
   if(!db.jobs.length) seedSample();
-  seedRoster(isoWeek());
   await persist();
 }
 function exportPayload(){ return {...db, exportedAt:new Date().toISOString(), appVersion:APP_VER}; }
@@ -1004,7 +1032,7 @@ function applyBranding(){
 }
 
 /* ---------- Navigation ---------- */
-const TITLES = {people:['คุณภาพรายบุคคล','คะแนนคุณภาพงาน PM ของผู้ปฏิบัติงานแต่ละคน'],dashboard:['Executive Dashboard','ภาพรวมคุณภาพงาน O&M'],pm:['บันทึกงาน PM','PM Checklist R.02 · F-OM-005 + Quality Scorecard'],records:['ประวัติงาน PM','รายการงาน PM ที่บันทึกแล้วทั้งหมด'],issues:['ปัญหาที่พบ (Issues)','ติดตามข้อที่ไม่ผ่านจากงาน PM'],cm:['งานแก้ไข (Corrective Maintenance)','ติดตาม SLA ตาม Priority P1–P4'],roster:['Manpower Roster','การจัดสรรทีมรายสัปดาห์'],reports:['รายงาน & สำรองข้อมูล','Export / Import / Backup / Restore'],settings:['ตั้งค่า','โลโก้ สีองค์กร ทีม และเกณฑ์']};
+const TITLES = {audit:['แผนสุ่มตรวจหน้างาน','Senior / Manager สุ่มตรวจคุณภาพงาน · เชื่อมแผนจาก Smart O&M Calendar'],people:['คุณภาพรายบุคคล','คะแนนคุณภาพงาน PM ของผู้ปฏิบัติงานแต่ละคน'],dashboard:['Executive Dashboard','ภาพรวมคุณภาพงาน O&M'],pm:['บันทึกงาน PM','PM Checklist R.02 · F-OM-005 + Quality Scorecard'],records:['ประวัติงาน PM','รายการงาน PM ที่บันทึกแล้วทั้งหมด'],issues:['ปัญหาที่พบ (Issues)','ติดตามข้อที่ไม่ผ่านจากงาน PM'],cm:['งานแก้ไข (Corrective Maintenance)','ติดตาม SLA ตาม Priority P1–P4'],reports:['รายงาน & สำรองข้อมูล','Export / Import / Backup / Restore'],settings:['ตั้งค่า','โลโก้ สีองค์กร ทีม และเกณฑ์']};
 function go(tab){
   if(!TITLES[tab]) tab='dashboard';
   ui.tab=tab;
@@ -1013,7 +1041,7 @@ function go(tab){
   $('#page-title').textContent=TITLES[tab][0]; $('#page-crumb').textContent=TITLES[tab][1];
   if(location.hash!=='#'+tab) history.replaceState(null,'','#'+tab);
   toggleNav(false); $('#content').scrollTop=0;
-  ({dashboard:renderDashboard,pm:renderPM,records:renderRecords,issues:renderIssues,people:renderPeople,cm:renderCM,roster:renderRoster,reports:renderReports,settings:renderSettings})[tab]();
+  ({audit:renderAudit,dashboard:renderDashboard,pm:renderPM,records:renderRecords,issues:renderIssues,people:renderPeople,cm:renderCM,reports:renderReports,settings:renderSettings})[tab]();
 }
 function updateBadges(){
   const openHigh=allIssues().filter(i=>i.status!=='แก้แล้ว' && i.sev==='สูง').length;
@@ -1067,8 +1095,12 @@ function computeDash(f){
     rework:e.filter(x=>x.j.sc.pen.rework).length,clPass:(()=>{let P=0,O=0; all.forEach(x=>{P+=x.c.cl.P;O+=x.c.cl.O;}); return P+O?P/(P+O)*100:null;})()}; }).filter(t=>t.jobs);
   let P=0,O=0; const clFail=CL.map(c=>({id:c.id,name:c.name,o:0})); jobs.forEach(x=>{ P+=x.c.cl.P; O+=x.c.cl.O; Object.entries(x.c.cl.byCat).forEach(([k,v])=>clFail[k-1].o+=v); });
   const scJobs=evald.filter(x=>!x.j.legacy);
-  const cats=SC.map(c=>{ let got=0,max=0; scJobs.forEach(x=>{ c.items.forEach(it=>{ const v=x.j.sc.items[it.no]; if(v&&v.s!==''&&v.s!=null){ got+=+v.s; max+=it.max; } }); }); return {id:c.id,name:c.name,pct:max?got/max*100:null}; });
-  const items=SC_ITEMS.map(it=>{ let got=0,max=0; jobs.filter(x=>!x.j.legacy).forEach(x=>{ const v=x.j.sc.items[it.no]; if(v&&v.s!==''&&v.s!=null){ got+=+v.s; max+=it.max; } }); return {...it,pct:max?got/max*100:null,lost:max-got}; }).filter(i=>i.pct!=null).sort((a,b)=>a.pct-b.pct);
+  const catMap=new Map(); const itMap=new Map();
+  scJobs.forEach(x=>{ const def=jobScDef(x.j); x.c.sc.cats.forEach(cc=>{ const key=cc.report?'__rep':cc.name; const e=catMap.get(key)||{name:cc.report?'PM Report':cc.name,report:cc.report,got:0,max:0}; let g=0,m=0; const dc=def.find(d=>d.id===cc.id);
+      (dc?dc.items:[]).forEach(it=>{ const v=x.j.sc.items[it.key]; if(v&&v.s!==''&&v.s!=null){ g+=+v.s; m+=+it.max; } const ik=it.task; const ie=itMap.get(ik)||{no:it.key.replace(/^cl:/,'').replace(/^x:.*/,'•'),task:it.task,ev:it.ev,got:0,max:0}; if(v&&v.s!==''&&v.s!=null){ ie.got+=+v.s; ie.max+=+it.max; } itMap.set(ik,ie); });
+      e.got+=g; e.max+=m; catMap.set(key,e); }); });
+  const catArr=[...catMap.values()].sort((a,b)=>(a.report-b.report)); const cats=catArr.map((c,i)=>({id:i+1,name:c.name,report:c.report,pct:c.max?c.got/c.max*100:null}));
+  const items=[...itMap.values()].filter(i=>i.max).map(i=>({...i,pct:i.got/i.max*100,lost:i.max-i.got})).sort((a,b)=>a.pct-b.pct);
   const pens=PENALTIES.map(p=>({...p,n:evald.filter(x=>x.j.sc?.pen?.[p.key]).length}));
   const issues=jobs.flatMap(x=>x.j.issues||[]); const openIss=issues.filter(i=>i.status!=='แก้แล้ว');
   const issSev=SEVERITY.map(sv=>({sev:sv,open:openIss.filter(i=>i.sev===sv).length,closed:issues.filter(i=>i.sev===sv&&i.status==='แก้แล้ว').length}));
@@ -1102,7 +1134,7 @@ function cfgClFail(D){ const c=colors(); const rows=D.clFail;
     options:baseOpts({indexAxis:'y',layout:{padding:{right:24,left:6}},scales:{x:{beginAtZero:true,ticks:{precision:0},grid:{color:'#eef1f6'}},y:{grid:{display:false},ticks:{font:{size:10.5}}}},plugins:{legend:{display:false},valueLabels:{enabled:true,hideZero:true}}})};
 }
 function cfgCat(D){ const c=colors();
-  return {type:'bar',data:{labels:D.cats.map(x=>`${x.id}. ${x.name.replace('PM Report & Customer Submission','PM Report')}`),datasets:[{label:'% ของคะแนนเต็ม',data:D.cats.map(x=>x.pct==null?null:Math.round(x.pct*10)/10),backgroundColor:D.cats.map(x=>x.id===5?c.navy:c.brand),borderRadius:5,barPercentage:.65}]},
+  return {type:'bar',data:{labels:D.cats.map(x=>shortTxt(`${x.id}. ${x.name.replace('PM Report & Customer Submission','PM Report')}`,30)),datasets:[{label:'% ของคะแนนเต็ม',data:D.cats.map(x=>x.pct==null?null:Math.round(x.pct*10)/10),backgroundColor:D.cats.map(x=>x.report?c.navy:c.brand),borderRadius:5,barPercentage:.65}]},
     options:baseOpts({indexAxis:'y',layout:{padding:{right:40}},scales:{x:{min:0,max:100,grid:{color:'#eef1f6'}},y:{grid:{display:false},ticks:{font:{size:10.5}}}},plugins:{legend:{display:false},valueLabels:{enabled:true,fmt:v=>n1(v)+'%'}}})};
 }
 function cfgCM(D){ const c=colors();
@@ -1139,7 +1171,7 @@ function renderDashboard(){
   $('#pen-summary').innerHTML=`<div class="small muted" style="margin-bottom:4px">บทลงโทษ (Penalty) ในช่วงนี้</div>`+D.pens.map(p=>`<div class="hbar"><span class="t">${p.name} <span class="muted">(-${p.pts})</span></span><span class="v num" style="color:${p.n?'var(--bad)':'inherit'}">${p.n}</span></div>`).join('');
   $('#weak-items').innerHTML = D.items.length ? D.items.slice(0,7).map(it=>`<div class="hbar"><span class="t" title="${esc(it.task)}"><b style="color:var(--navy)">${it.no}</b> ${esc(it.task)}</span><span class="track"><span class="fill" style="display:block;width:${it.pct}%;background:${it.pct>=s.passMark?c.brand:it.pct>=70?c.warn:c.bad}"></span></span><span class="v num">${n0(it.pct)}%</span></div>`).join('') : `<div class="empty"><i class="fa-regular fa-chart-bar"></i>ยังไม่มีข้อมูลการประเมิน</div>`;
   const recent=[...D.jobs].reverse().slice(0,6);
-  $('#dash-recent').innerHTML = recent.length ? `<table class="tbl"><thead><tr><th>วันที่</th><th>Site</th><th>ทีม</th><th>ผู้ปฏิบัติงาน</th><th class="c">Checklist</th><th class="r">คะแนน</th><th>สถานะ</th></tr></thead><tbody>${recent.map(({j,c:k})=>`<tr style="cursor:pointer" onclick="editJob('${j.id}')"><td class="num">${fmtDate(j.info.date)}</td><td><b>${esc(j.info.site)}</b></td><td>${esc(j.info.team)}</td><td class="small">${esc((j.info.members||[]).join(', '))||'—'}</td><td class="c num">${k.cl.done}/${CL_TOTAL}${k.cl.O?` <span class="badge b-fail">O ${k.cl.O}</span>`:''}</td><td class="r num"><b>${k.sc.scored?n1(k.sc.net):'—'}</b></td><td>${statusBadge(k.sc.status)}</td></tr>`).join('')}</tbody></table>` : `<div class="empty"><i class="fa-regular fa-folder-open"></i>ยังไม่มีงาน PM ในช่วงนี้</div>`;
+  $('#dash-recent').innerHTML = recent.length ? `<table class="tbl"><thead><tr><th>วันที่</th><th>Site</th><th>ทีม</th><th>ผู้ปฏิบัติงาน</th><th class="c">Checklist</th><th class="r">คะแนน</th><th>สถานะ</th></tr></thead><tbody>${recent.map(({j,c:k})=>`<tr style="cursor:pointer" onclick="editJob('${j.id}')"><td class="num">${fmtDate(j.info.date)}</td><td><b>${esc(j.info.site)}</b></td><td>${esc(j.info.team)}</td><td class="small">${esc((j.info.members||[]).join(', '))||'—'}</td><td class="c num">${k.cl.done}/${k.cl.total}${k.cl.O?` <span class="badge b-fail">O ${k.cl.O}</span>`:''}</td><td class="r num"><b>${k.sc.scored?n1(k.sc.net):'—'}</b></td><td>${statusBadge(k.sc.status)}</td></tr>`).join('')}</tbody></table>` : `<div class="empty"><i class="fa-regular fa-folder-open"></i>ยังไม่มีงาน PM ในช่วงนี้</div>`;
 }
 async function confirmRemoveSample(){ if(await confirmBox('ลบข้อมูลตัวอย่าง','ระบบจะลบเฉพาะรายการที่เป็นข้อมูลตัวอย่าง (งาน PM, CM, KPI) ข้อมูลที่คุณบันทึกเองจะไม่ถูกลบ','ลบข้อมูลตัวอย่าง',true)){ maybeSnapshot(true,'ก่อนลบข้อมูลตัวอย่าง'); removeSample(); } }
 
@@ -1160,7 +1192,7 @@ function renderPM(){
 }
 function renderSteps(){
   const k=jobCalc(job); const sc=k.sc;
-  const done=[job.info.site&&job.info.date&&k.cl.pre===PRE_CHECKS.length, k.cl.done===CL_TOTAL, k.cl.O===0||job.issues.length>=1, sc.complete];
+  const done=[job.info.site&&job.info.date&&k.cl.pre===PRE_CHECKS.length, k.cl.done===k.cl.total, k.cl.O===0||job.issues.length>=1, sc.complete];
   $('#pm-steps').innerHTML=STEPS.map((s,i)=>`<button class="step ${ui.step===i+1?'on':''} ${done[i]?'done':''}" onclick="pmGo(${i+1})"><span class="n">${done[i]?'<i class="fa-solid fa-check"></i>':i+1}</span>${s[0]}</button>`).join('');
   $('#pm-prev').style.visibility=ui.step>1?'visible':'hidden';
   $('#pm-next').innerHTML = ui.step<4 ? 'ถัดไป <i class="fa-solid fa-arrow-right"></i>' : '<i class="fa-solid fa-floppy-disk"></i> บันทึกงาน PM';
@@ -1224,43 +1256,88 @@ function paneChecklist(){
   const k=calcCL(job);
   $('#pane-2').innerHTML=`
   <div class="card" style="margin-bottom:14px"><div class="card-b row">
-    <div><b class="num">${k.done}/${CL_TOTAL}</b> <span class="muted">ข้อที่ตรวจแล้ว</span> &nbsp; <span class="badge b-pass">P ${k.P}</span> <span class="badge b-fail">O ${k.O}</span> <span class="badge b-wait">N/A ${k.NA}</span></div>
+    <div><b class="num">${k.done}/${k.total}</b> <span class="muted">ข้อที่ตรวจแล้ว</span> &nbsp; <span class="badge b-pass">P ${k.P}</span> <span class="badge b-fail">O ${k.O}</span> <span class="badge b-wait">N/A ${k.NA}</span></div>
     <span class="spacer"></span>
     <span class="muted small">ช่องสีเหลือง = เขียนค่าที่วัด · ข้อที่ติ๊ก O จะถูกเพิ่มในสรุปปัญหาอัตโนมัติ</span>
     <button class="btn btn-sm" onclick="clFillBlank()"><i class="fa-solid fa-check-double"></i> ข้อที่ยังว่าง = ผ่าน</button>
     <button class="btn btn-sm" onclick="clCollapse()"><i class="fa-solid fa-up-down"></i> ย่อ/ขยาย</button>
   </div></div>
-  ${CL.map(c=>{ const items=c.items; const d=items.filter(it=>job.cl[it.no]?.r).length; const o=items.filter(it=>job.cl[it.no]?.r==='O').length;
+  ${jobCats(job).map(c=>{ const items=c.items; const d=items.filter(it=>job.cl[it.no]?.r).length; const o=items.filter(it=>job.cl[it.no]?.r==='O').length;
    return `<div class="card cl-cat" data-cat="${c.id}">
     <div class="card-h" onclick="this.parentElement.classList.toggle('collapsed')"><span class="cat-no">${c.id}</span><div style="min-width:0"><h3>${c.name}</h3><div class="sub">${c.th}</div></div>
       <div class="right"><span class="prog num" data-prog="${c.id}">${d}/${items.length}</span>${o?`<span class="badge b-fail" data-ocount="${c.id}">O ${o}</span>`:`<span data-ocount="${c.id}"></span>`}
-      <button class="btn btn-sm" onclick="event.stopPropagation();clCat(${c.id},'P')" title="ผ่านทั้งหมวด">P ทั้งหมวด</button>
-      ${c.optional||[5,6,10,12].includes(c.id)?`<button class="btn btn-sm" onclick="event.stopPropagation();clCat(${c.id},'NA')" title="ไม่มีอุปกรณ์">N/A ทั้งหมวด</button>`:''}
+      <div class="pon bulk" onclick="event.stopPropagation()" title="ใส่ผลทั้งหมวด"><button type="button" data-r="P" onclick="clCat(${c.id},'P')">P ทั้งหมด</button><button type="button" data-r="O" onclick="clCat(${c.id},'O')">O ทั้งหมด</button><button type="button" data-r="NA" onclick="clCat(${c.id},'NA')">N/A ทั้งหมด</button><button type="button" onclick="clCat(${c.id},'')" title="ล้างผลทั้งหมวด"><i class="fa-solid fa-eraser"></i></button></div>
       <i class="fa-solid fa-chevron-down caret"></i></div></div>
-    <div class="cl-body">${items.map(it=>clRowHTML(it)).join('')}</div></div>`; }).join('')}`;
+    <div class="cl-body">${items.map(it=>clRowHTML(it)).join('')||'<div class="small muted" style="padding:12px 18px">ไม่มีรายการตรวจในหมวดนี้</div>'}
+      <div class="cl-add"><button type="button" class="btn btn-sm" onclick="clAddItem(${c.id})"><i class="fa-solid fa-plus"></i> เพิ่มรายการตรวจในหมวดนี้</button></div></div></div>`; }).join('')}`;
 }
 function clRowHTML(it){
   const v=job.cl[it.no]||{}; const out=isOut(it,v.v);
   let extra=''; if(it.no==='1.6'){ const a=num(job.cl['1.5']?.v), b=num(v.v); if(a!=null&&b!=null) extra=`<div class="small" style="color:var(--info)">ใช้น้ำ ${n1(b-a)} หน่วย</div>`; }
   return `<div class="cl-item ${v.r?'r-'+v.r:''}" data-no="${it.no}">
    <div class="no">${it.no}</div>
-   <div><div class="task">${esc(it.task)}</div><div class="crit">${esc(it.crit)}</div>${extra}</div>
+   <div><div class="task">${esc(it.task)}${it.custom?' <span class="badge b-navy" style="font-size:10px;padding:1px 6px">เพิ่มเอง</span>':''}</div><div class="crit">${esc(it.crit)}</div>${extra}</div>
    <div class="meas-w">${it.unit?`<div class="measure ${out?'out':''}"><input class="inp" data-val="${it.no}" value="${esc(v.v||'')}" placeholder="ค่าที่วัด" ${it.unit==='วันที่'?'type="date"':''}><span class="u">${it.unit==='วันที่'?'':esc(it.unit)}</span></div>${out?'<div class="flag"><i class="fa-solid fa-triangle-exclamation"></i> นอกเกณฑ์</div>':''}`:''}</div>
    <div class="pon-w"><div class="pon">${['P','O','NA'].map(r=>`<button type="button" data-r="${r}" class="${v.r===r?'on':''}" title="${r==='P'?'ผ่าน':r==='O'?'ไม่ผ่าน':'ไม่มีอุปกรณ์นี้'}">${r==='NA'?'N/A':r}</button>`).join('')}</div></div>
    <div class="note"><input class="inp sm" data-note="${it.no}" value="${esc(v.n||'')}" placeholder="หมายเหตุ / ตำแหน่งที่พบ"></div>
+   <div class="cl-acts">${it.custom?`<button type="button" class="cl-del cl-ed" onclick="clEditItem('${it.no}')" title="แก้ไขรายการที่เพิ่มเอง"><i class="fa-solid fa-pen"></i></button>`:''}<button type="button" class="cl-del" onclick="clDelItem('${it.no}')" title="ลบรายการตรวจนี้"><i class="fa-solid fa-xmark"></i></button></div>
   </div>`;
 }
 function isOut(it,val){ if(!it.range) return false; const x=num(val); if(x==null) return false; const [lo,hi]=it.range; return (lo!=null&&x<lo)||(hi!=null&&x>hi); }
 function setCL(no,r){
   const prev=job.cl[no]?.r; job.cl[no]={...(job.cl[no]||{v:'',n:''}),r};
-  const it=CL_ITEMS.find(x=>x.no===no);
+  const it=jobItems(job).find(x=>x.no===no)||{task:no};
   if(r==='O' && !job.issues.some(i=>i.item===no)) job.issues.push({id:uid(),item:no,loc:job.cl[no].n||'',prob:it.task+' – ไม่ผ่านเกณฑ์',sev:'กลาง',act:'',owner:job.info.team||'',due:'',status:'รอดำเนินการ',auto:true});
   if(prev==='O' && r!=='O') job.issues=job.issues.filter(i=>!(i.item===no && i.auto));
 }
-function refreshClRow(no){ const it=CL_ITEMS.find(x=>x.no===no); const el=$(`.cl-item[data-no="${CSS.escape(no)}"]`); if(el){ el.outerHTML=clRowHTML(it); } const c=CL.find(c=>c.id===it.cat); const d=c.items.filter(x=>job.cl[x.no]?.r).length, o=c.items.filter(x=>job.cl[x.no]?.r==='O').length;
+function refreshClRow(no){ const it=jobItems(job).find(x=>x.no===no); if(!it) return; const el=$(`.cl-item[data-no="${CSS.escape(no)}"]`); if(el){ el.outerHTML=clRowHTML(it); } const c=jobCats(job).find(c=>c.id===it.cat); const d=c.items.filter(x=>job.cl[x.no]?.r).length, o=c.items.filter(x=>job.cl[x.no]?.r==='O').length;
   const pg=$(`[data-prog="${c.id}"]`); if(pg) pg.textContent=`${d}/${c.items.length}`; const oc=$(`[data-ocount="${c.id}"]`); if(oc){ oc.className=o?'badge b-fail':''; oc.textContent=o?`O ${o}`:''; } }
-function clCat(id,r){ CL.find(c=>c.id===id).items.forEach(it=>setCL(it.no,r)); paneChecklist(); jobChanged({steps:true}); }
-function clFillBlank(){ CL_ITEMS.forEach(it=>{ if(!job.cl[it.no]?.r) setCL(it.no,'P'); }); paneChecklist(); jobChanged({steps:true}); }
+function clCat(id,r){ jobCats(job).find(c=>c.id===id).items.forEach(it=>{ if(r) setCL(it.no,r); else { if(job.cl[it.no]?.r==='O') job.issues=job.issues.filter(i=>!(i.item===it.no&&i.auto)); if(job.cl[it.no]) job.cl[it.no].r=''; } }); paneChecklist(); jobChanged({steps:true}); }
+async function clAddItem(cat){
+  const c=CL.find(x=>x.id===cat); const no=nextItemNo(cat,job);
+  const ok=await dialog({title:`เพิ่มรายการตรวจ – หมวด ${cat} ${c.name}`,body:`<div class="fgrid f2" style="margin-top:6px">
+    <div class="span4"><label class="lbl">รายการตรวจ (ทำอะไร) <span class="req">*</span></label><input class="inp" id="ci-task" placeholder="เช่น ตรวจสภาพสาย DC ในรางเดินสาย"></div>
+    <div class="span4"><label class="lbl">เกณฑ์ผ่าน / วิธีตรวจ</label><input class="inp" id="ci-crit" placeholder="เช่น ไม่มีรอยไหม้ ฉนวนไม่ชำรุด"></div>
+    <div><label class="lbl">หน่วยค่าที่วัด (ถ้ามี)</label><input class="inp" id="ci-unit" placeholder="เช่น V, A, Ω, Nm"></div>
+    <div><label class="lbl">เลขข้อ</label><input class="inp" id="ci-no" value="${no}"></div>
+    <label class="checkrow span4" style="padding:6px 0"><input type="checkbox" id="ci-tpl" checked><span>ใช้เป็นรายการมาตรฐานสำหรับงาน PM ถัดไปด้วย</span></label></div>`,
+    actions:[{label:'ยกเลิก',value:false},{label:'<i class="fa-solid fa-plus"></i> เพิ่มรายการ',value:true,cls:'btn-primary'}]});
+  if(!ok) return; const task=$('#ci-task').value.trim(); if(!task){ toast('กรุณากรอกรายการตรวจ','error'); return; }
+  let n=$('#ci-no').value.trim()||no; if(!new RegExp('^'+cat+'\\.\\d+$').test(n)) n=no;
+  if(jobItems(job).some(i=>i.no===n)){ toast(`มีข้อ ${n} แล้ว – ใช้ ${no} แทน`,'warn'); n=no; }
+  const item={no:n,cat,task,crit:$('#ci-crit').value.trim(),unit:$('#ci-unit').value.trim(),range:null,custom:true};
+  if(!Array.isArray(job.clDef)) job.clDef=clone(CL_ITEMS);
+  job.clDef.push(item); job.clDef.sort((a,b)=>noKey(a.no)-noKey(b.no));
+  if($('#ci-tpl').checked){ const s=db.settings; s.clAdded=(s.clAdded||[]).filter(i=>i.no!==n); s.clAdded.push(item); s.clRemoved=(s.clRemoved||[]).filter(x=>x!==n); touch(); }
+  paneChecklist(); jobChanged({steps:true}); toast(`เพิ่มข้อ ${n} แล้ว`,'ok');
+}
+async function clEditItem(no){
+  const it=jobItems(job).find(i=>i.no===no); if(!it) return; const inTpl=(db.settings.clAdded||[]).some(i=>i.no===no);
+  const ok=await dialog({title:`แก้ไขรายการตรวจข้อ ${no}`,body:`<div class="fgrid f2" style="margin-top:6px">
+    <div class="span4"><label class="lbl">รายการตรวจ (ทำอะไร) <span class="req">*</span></label><input class="inp" id="ci-task" value="${esc(it.task)}"></div>
+    <div class="span4"><label class="lbl">เกณฑ์ผ่าน / วิธีตรวจ</label><input class="inp" id="ci-crit" value="${esc(it.crit)}"></div>
+    <div><label class="lbl">หน่วยค่าที่วัด (ถ้ามี)</label><input class="inp" id="ci-unit" value="${esc(it.unit)}"></div>
+    <label class="checkrow span4" style="padding:6px 0"><input type="checkbox" id="ci-tpl" ${inTpl?'checked':''}><span>อัปเดตในรายการมาตรฐานสำหรับงาน PM ถัดไปด้วย</span></label></div>`,
+    actions:[{label:'ยกเลิก',value:false},{label:'<i class="fa-solid fa-check"></i> บันทึกการแก้ไข',value:true,cls:'btn-primary'}]});
+  if(!ok) return; const task=$('#ci-task').value.trim(); if(!task){ toast('กรุณากรอกรายการตรวจ','error'); return; }
+  if(!Array.isArray(job.clDef)) job.clDef=clone(CL_ITEMS);
+  const tgt=job.clDef.find(i=>i.no===no); const oldTask=tgt.task; Object.assign(tgt,{task,crit:$('#ci-crit').value.trim(),unit:$('#ci-unit').value.trim()});
+  job.issues.forEach(i=>{ if(i.item===no&&i.auto&&i.prob.startsWith(oldTask)) i.prob=task+' – ไม่ผ่านเกณฑ์'; });
+  (job.sc.def||[]).forEach(c=>c.items.forEach(x=>{ if(x.key==='cl:'+no&&x.task===oldTask){ x.task=task; x.ev=tgt.crit||x.ev; } }));
+  if($('#ci-tpl').checked){ const s=db.settings; s.clAdded=(s.clAdded||[]).filter(i=>i.no!==no); s.clAdded.push({...tgt}); touch(); }
+  paneChecklist(); jobChanged(); toast(`แก้ไขข้อ ${no} แล้ว`,'ok');
+}
+async function clDelItem(no){
+  const it=jobItems(job).find(i=>i.no===no); if(!it) return;
+  const ok=await dialog({title:`ลบรายการตรวจข้อ ${no}`,body:`<b>${esc(it.task)}</b><br><span class="small muted">ผลตรวจและหมายเหตุของข้อนี้ในงานนี้จะถูกลบ</span><label class="checkrow" style="padding:10px 0 0"><input type="checkbox" id="cd-tpl"><span>นำออกจากรายการมาตรฐานด้วย (งาน PM ถัดไปจะไม่มีข้อนี้)</span></label>`,
+    actions:[{label:'ยกเลิก',value:false},{label:'ลบรายการ',value:true,cls:'btn-danger'}]});
+  if(!ok) return; const tpl=$('#cd-tpl').checked;
+  if(!Array.isArray(job.clDef)) job.clDef=clone(CL_ITEMS);
+  job.clDef=job.clDef.filter(i=>i.no!==no); delete job.cl[no]; job.issues=job.issues.filter(i=>!(i.item===no&&i.auto));
+  if(tpl){ const s=db.settings; s.clAdded=(s.clAdded||[]).filter(i=>i.no!==no); if(CL_ITEMS.some(i=>i.no===no)&&!(s.clRemoved||[]).includes(no)) (s.clRemoved=s.clRemoved||[]).push(no); touch(); }
+  paneChecklist(); jobChanged({steps:true}); toast(`ลบข้อ ${no} แล้ว`,'ok');
+}
+function clFillBlank(){ jobItems(job).forEach(it=>{ if(!job.cl[it.no]?.r) setCL(it.no,'P'); }); paneChecklist(); jobChanged({steps:true}); }
 function clCollapse(){ const all=$$('.cl-cat'); const anyOpen=all.some(c=>!c.classList.contains('collapsed')); all.forEach(c=>c.classList.toggle('collapsed',anyOpen)); }
 
 /* ----- pane 3: issues ----- */
@@ -1280,28 +1357,42 @@ function paneIssues(){
         <div><label class="lbl">กำหนดเสร็จ</label><input class="inp" type="date" data-if="due" value="${esc(is.due)}"></div>
         <div><label class="lbl">สถานะ</label><select class="inp" data-if="status">${opts(ISSUE_STATUS,is.status)}</select></div></div>
     </div>`).join('') || `<div class="empty"><i class="fa-regular fa-circle-check"></i>ไม่มีปัญหาที่พบ – ข้อที่ติ๊ก O ใน Checklist จะถูกเพิ่มที่นี่อัตโนมัติ</div>`}
-    <datalist id="dl-clno">${CL_ITEMS.map(i=>`<option value="${i.no}">${esc(i.task)}</option>`).join('')}</datalist>
+    <datalist id="dl-clno">${jobItems(job).map(i=>`<option value="${i.no}">${esc(i.task)}</option>`).join('')}</datalist>
    </div></div>`;
 }
 function issueAdd(){ job.issues.push({id:uid(),item:'',loc:'',prob:'',sev:'กลาง',act:'',owner:job.info.team||'',due:'',status:'รอดำเนินการ',auto:false}); paneIssues(); jobChanged({steps:true}); }
 function issueDel(k){ job.issues.splice(k,1); paneIssues(); jobChanged({steps:true}); }
 
-/* ----- pane 4: Quality scorecard ----- */
+/* ----- pane 4: Quality scorecard (customizable) ----- */
+function scDefOwn(){ if(!Array.isArray(job.sc.def)) job.sc.def=clone(DEFAULT_SC_DEF); return job.sc.def; }
+function scItem(key){ for(const c of jobScDef(job)) for(const it of c.items) if(it.key===key) return it; return null; }
+function scOrdered(def){ return [...def.filter(c=>!c.report),...def.filter(c=>c.report)]; }
 function paneScore(){
-  const sc=job.sc; const k=calcSC(sc);
-  const catHTML=c=>`<div class="card cl-cat" style="margin-bottom:14px"><div class="card-h"><span class="cat-no" style="${c.report?'background:var(--accent)':''}">${c.id}</span><div><h3>${c.name}</h3><div class="sub">${c.report?'คะแนนส่วนสุดท้าย – ให้หลังรายงานผ่าน Review และพร้อมส่งลูกค้า':'น้ำหนัก '+c.weight+' คะแนน'}</div></div>
-     <div class="right"><span class="num" style="font-family:var(--head);font-weight:600;font-size:16px"><span data-catsum="${c.id}">${fmtPts(k.cats[c.id-1].score)}</span><span class="muted" style="font-size:13px"> / ${fmtPts(c.weight)}</span></span></div></div>
-     ${c.report?`<div class="card-b" style="border-bottom:1px solid var(--line2)"><div class="fgrid f3">
+  const sc=job.sc; const k=calcSC(sc); const def=jobScDef(job); const edit=!!ui.scEdit; const ord=scOrdered(def);
+  const nItems=def.filter(c=>!c.report).reduce((a,c)=>a+c.items.length,0);
+  const catHTML=(c,ci)=>{ const kc=k.cats.find(x=>x.id===c.id)||{score:0,max:0}; const dci=def.indexOf(c);
+    return `<div class="card cl-cat sc-cat" style="margin-bottom:14px" data-ci="${dci}"><div class="card-h"><span class="cat-no" style="${c.report?'background:var(--accent)':''}">${ci+1}</span>
+     ${edit&&!c.report?`<div style="flex:1;min-width:180px"><input class="inp sm" data-scdef="catname" value="${esc(c.name)}" placeholder="ชื่อหัวข้อหลัก"></div>`:`<div style="min-width:0"><h3>${esc(c.name)}</h3><div class="sub">${c.report?'คะแนนส่วนสุดท้าย 10 คะแนน – ให้หลังรายงานผ่าน Review และพร้อมส่งลูกค้า':`${c.items.length} หัวข้อย่อย · คะแนนดิบ ${fmtPts(kc.max)}`}</div></div>`}
+     <div class="right">${edit&&!c.report?`<button type="button" class="btn btn-sm btn-danger" data-scact="delcat" title="ลบหัวข้อหลักนี้"><i class="fa-regular fa-trash-can"></i> ลบหัวข้อหลัก</button>`:`<span class="num" style="font-family:var(--head);font-weight:600;font-size:16px"><span data-catsum="${esc(c.id)}">${fmtPts(kc.score)}</span><span class="muted" style="font-size:13px"> / ${fmtPts(kc.max)}</span></span>`}</div></div>
+     ${c.report&&!edit?`<div class="card-b" style="border-bottom:1px solid var(--line2)"><div class="fgrid f3">
         <div><label class="lbl">ผู้ Review รายงาน</label><input class="inp" data-sc="reviewer" value="${esc(sc.reviewer)}" placeholder="ชื่อผู้ Review"></div>
         <div><label class="lbl">วันที่ Review เสร็จ</label><input class="inp" type="date" data-sc="reviewDate" value="${esc(sc.reviewDate)}"></div>
         <div><label class="lbl">วันที่ส่งลูกค้า</label><input class="inp" type="date" data-sc="sentDate" value="${esc(sc.sentDate)}"></div></div></div>`:''}
-     ${c.items.map(it=>{ const v=sc.items[it.no]||{s:'',ev:true,rm:''}; return `<div class="sc-item" data-scno="${it.no}">
-       <div class="no">${it.no}</div>
-       <div><div style="font-weight:500">${esc(it.task)}</div><div class="crit small muted"><i class="fa-solid fa-camera"></i> ${esc(it.ev)}</div></div>
-       <div class="row" style="gap:6px;flex-wrap:nowrap"><div class="stepper"><button type="button" data-step="-1">−</button><input type="number" step="0.5" min="0" max="${it.max}" data-score="${it.no}" value="${v.s===''||v.s==null?'':v.s}" placeholder="–" ${v.ev===false?'disabled':''}><button type="button" data-step="1">+</button></div><span class="maxlbl" data-full="${it.no}" title="คลิกเพื่อให้คะแนนเต็ม">/ ${fmtPts(it.max)}</span></div>
-       <button type="button" class="ev ${v.ev===false?'n':'y'}" data-ev="${it.no}" title="มีหลักฐานแนบครบหรือไม่ (ไม่มีหลักฐาน = 0 คะแนน)">${v.ev===false?'ไม่มี':'มีหลักฐาน'}</button>
-       <input class="inp sm rm" data-rm="${it.no}" value="${esc(v.rm||'')}" placeholder="Senior Remarks">
-     </div>`; }).join('')}</div>`;
+     ${c.items.map((it,ii)=>{ const no=`${ci+1}.${ii+1}`;
+       if(edit&&!c.report) return `<div class="sc-item sc-edit" data-ii="${ii}"><div class="no">${no}</div>
+         <div style="display:flex;flex-direction:column;gap:5px"><input class="inp sm" data-scdef="task" value="${esc(it.task)}" placeholder="หัวข้อย่อย"><input class="inp sm" data-scdef="ev" value="${esc(it.ev)}" placeholder="หลักฐานบังคับแนบ"></div>
+         <div class="row" style="gap:4px;flex-wrap:nowrap"><span class="small muted">เต็ม</span><input class="inp sm" type="number" min="0.5" step="0.5" data-scdef="max" value="${it.max}" style="width:70px;text-align:center"></div>
+         <span class="small muted">${it.key.startsWith('cl:')?`<i class="fa-solid fa-link"></i> Checklist ${esc(it.key.slice(3))}`:''}</span>
+         <div><button type="button" class="btn btn-sm btn-icon btn-danger" data-scact="delitem" title="ลบหัวข้อย่อย"><i class="fa-solid fa-xmark"></i></button></div></div>`;
+       const v=sc.items[it.key]||{s:'',ev:true,rm:''}; return `<div class="sc-item" data-scno="${esc(it.key)}">
+       <div class="no">${no}</div>
+       <div><div style="font-weight:500">${esc(it.task)}</div><div class="crit small muted"><i class="fa-solid fa-camera"></i> ${esc(it.ev)||'—'}</div></div>
+       <div class="row" style="gap:6px;flex-wrap:nowrap"><div class="stepper"><button type="button" data-step="-1">−</button><input type="number" step="0.5" min="0" max="${it.max}" data-score="${esc(it.key)}" value="${v.s===''||v.s==null?'':v.s}" placeholder="–" ${v.ev===false?'disabled':''}><button type="button" data-step="1">+</button></div><span class="maxlbl" data-full="${esc(it.key)}" title="คลิกเพื่อให้คะแนนเต็ม">/ ${fmtPts(it.max)}</span></div>
+       <button type="button" class="ev ${v.ev===false?'n':'y'}" data-ev="${esc(it.key)}" title="มีหลักฐานแนบครบหรือไม่ (ไม่มีหลักฐาน = 0 คะแนน)">${v.ev===false?'ไม่มี':'มีหลักฐาน'}</button>
+       <input class="inp sm rm" data-rm="${esc(it.key)}" value="${esc(v.rm||'')}" placeholder="Senior Remarks">
+     </div>`; }).join('')||'<div class="small muted" style="padding:12px 18px">ยังไม่มีหัวข้อย่อย</div>'}
+     ${edit&&!c.report?`<div class="cl-add row"><button type="button" class="btn btn-sm btn-primary" data-scact="additems"><i class="fa-solid fa-list-check"></i> เพิ่มหัวข้อย่อยจาก Checklist</button><button type="button" class="btn btn-sm" data-scact="addcustom"><i class="fa-solid fa-plus"></i> เพิ่มหัวข้อย่อยเอง</button></div>`:''}
+     ${edit&&c.report?'<div class="small muted" style="padding:10px 18px;border-top:1px solid var(--line2)"><i class="fa-solid fa-lock"></i> หมวด PM Report คงไว้ 10 คะแนนตามหลักเกณฑ์ (ไม่แก้ไขในโหมดนี้)</div>':''}</div>`; };
   $('#pane-4').innerHTML=`
   <div class="card" style="margin-bottom:14px"><div class="card-h"><h3><i class="fa-solid fa-user-shield" style="color:var(--navy)"></i> ข้อมูลการ Audit</h3><span class="sub">PM Quality Scorecard – ประเมินด้วยหลักฐานเชิงประจักษ์</span></div>
    <div class="card-b"><div class="fgrid">
@@ -1309,23 +1400,77 @@ function paneScore(){
     <div><label class="lbl">วันที่ประเมิน</label><input class="inp" type="date" data-sc="evalDate" value="${esc(sc.evalDate)}"></div>
     <div class="span2"><label class="lbl">รูปแบบการ Audit</label><div class="seg">${Object.entries(AUDIT_TYPES).map(([k2,v])=>`<button type="button" class="${sc.auditType===k2?'on':''}" data-audit="${k2}">${v}</button>`).join('')}</div></div>
     <div class="span4"><label class="lbl">ผู้ปฏิบัติงาน PM ที่ถูกประเมิน <span class="muted" style="font-weight:400">(คะแนนของงานนี้จะนับให้ทุกคนในรายชื่อ – ดูได้ที่เมนู “คุณภาพรายบุคคล”)</span></label><div class="tags-host">${tagsHTML()+teamSuggestHTML()}</div></div>
-   </div>
-   <div class="small muted mt"><i class="fa-solid fa-circle-info"></i> โครงสร้างคะแนน: หมวด 1–4 ตรวจคุณภาพหน้างาน <b>90 คะแนน</b> + หมวด 5 PM Report ฉบับสมบูรณ์พร้อมส่งลูกค้า <b>10 คะแนน</b> = 100 · ผ่านเมื่อคะแนนสุทธิ ≥ ${db.settings.passMark}</div></div></div>
-  ${SC.filter(c=>!c.report).map(catHTML).join('')}
-  <div class="card" style="margin-bottom:14px"><div class="card-h"><h3 style="color:var(--bad)"><i class="fa-solid fa-gavel"></i> Penalty Deduction (ผู้ตรวจสอบเท่านั้น)</h3></div><div class="card-b">
+   </div></div></div>
+  <div class="card sc-bar ${edit?'editing':''}" style="margin-bottom:14px"><div class="card-b row">
+    <div style="flex:1;min-width:240px"><b>หัวข้อประเมิน</b> <span class="muted small">${def.filter(c=>!c.report).length} หัวข้อหลัก · ${nItems} หัวข้อย่อย · คะแนนดิบหน้างาน ${fmtPts(k.fieldMax)}${k.fieldMax&&k.fieldMax!==90?' → ปรับเป็น 90':''} + PM Report 10 = 100 · ผ่าน ≥ ${db.settings.passMark}</span></div>
+    ${edit?`<button type="button" class="btn btn-sm" data-scact="addcat"><i class="fa-solid fa-folder-plus"></i> เพิ่มหัวข้อหลักจาก Checklist 13 หมวด</button><button type="button" class="btn btn-sm" data-scact="addcatcustom"><i class="fa-solid fa-plus"></i> หัวข้อหลักเอง</button>
+       <button type="button" class="btn btn-sm" data-scact="savetpl" title="ใช้ชุดหัวข้อนี้กับงาน PM ใหม่ถัดไป"><i class="fa-solid fa-bookmark"></i> บันทึกเป็นแบบมาตรฐาน</button><button type="button" class="btn btn-sm" data-scact="reset"><i class="fa-solid fa-rotate-left"></i> คืนค่าแบบเดิม</button><button type="button" class="btn btn-sm btn-primary" data-scact="done"><i class="fa-solid fa-check"></i> เสร็จสิ้น</button>`
+      :`<button type="button" class="btn btn-sm" data-scact="edit"><i class="fa-solid fa-pen-to-square"></i> แก้ไขหัวข้อประเมิน</button>`}
+  </div></div>
+  ${ord.filter(c=>!c.report).map((c,i)=>catHTML(c,i)).join('')||'<div class="card card-b small muted" style="margin-bottom:14px">ยังไม่มีหัวข้อประเมินหน้างาน – กด “แก้ไขหัวข้อประเมิน” แล้วเพิ่มหัวข้อหลักจาก Checklist</div>'}
+  ${edit?'':`<div class="card" style="margin-bottom:14px"><div class="card-h"><h3 style="color:var(--bad)"><i class="fa-solid fa-gavel"></i> Penalty Deduction (ผู้ตรวจสอบเท่านั้น)</h3></div><div class="card-b">
    ${PENALTIES.map(p=>`<label class="pen ${sc.pen[p.key]?'on':''}"><input type="checkbox" data-pen="${p.key}" ${sc.pen[p.key]?'checked':''}><div><div style="font-weight:600">${p.name} <span class="muted" style="font-weight:400">(${p.th})</span></div><div class="small" style="color:var(--ink2)">${esc(p.desc)}</div><div class="small muted">${esc(p.cond)}</div></div><span class="pts">−${p.pts}</span></label>`).join('')}
    <input class="inp mt" data-sc="penRemark" value="${esc(sc.penRemark)}" placeholder="หมายเหตุการหักคะแนน">
-  </div></div>
-  ${SC.filter(c=>c.report).map(catHTML).join('')}${peopleDatalist()}`;
+  </div></div>`}
+  ${ord.filter(c=>c.report).map(c=>catHTML(c,ord.filter(x=>!x.report).length)).join('')}${peopleDatalist()}`;
 }
 function fmtPts(v){ return Number.isInteger(+v)? String(+v) : (+v).toFixed(1); }
 function setScore(no,val){
-  const it=SC_ITEMS.find(x=>x.no===no); const cur=job.sc.items[no]||{s:'',ev:true,rm:''};
-  if(val===''||val==null){ cur.s=''; } else { let x=Math.round(parseFloat(val)*2)/2; if(isNaN(x)) x=0; cur.s=Math.min(it.max,Math.max(0,x)); }
+  const it=scItem(no); if(!it) return; const cur=job.sc.items[no]||{s:'',ev:true,rm:''};
+  if(val===''||val==null){ cur.s=''; } else { let x=Math.round(parseFloat(val)*2)/2; if(isNaN(x)) x=0; cur.s=Math.min(+it.max,Math.max(0,x)); }
   job.sc.items[no]=cur; const inp=$(`[data-score="${CSS.escape(no)}"]`); if(inp && document.activeElement!==inp) inp.value=cur.s;
   refreshCatSums();
 }
-function refreshCatSums(){ const k=calcSC(job.sc); k.cats.forEach(c=>{ const el=$(`[data-catsum="${c.id}"]`); if(el) el.textContent=fmtPts(c.score); }); }
+function refreshCatSums(){ const k=calcSC(job.sc); k.cats.forEach(c=>{ const el=$(`[data-catsum="${CSS.escape(c.id)}"]`); if(el) el.textContent=fmtPts(c.score); }); }
+async function scPickChecklist(title,preCat){
+  const def=jobScDef(job); const used=new Set(def.flatMap(c=>c.items.map(i=>i.key)));
+  const cats=jobCats(job).filter(c=>c.items.length);
+  const body=`<div class="row" style="margin:4px 0 10px;gap:8px">${preCat==null?'':`<select class="inp sm" id="sp-cat" style="flex:1">${cats.map(c=>`<option value="${c.id}" ${c.id===preCat?'selected':''}>หมวด ${c.id} • ${esc(c.name)} – ${esc(c.th)}</option>`).join('')}</select>`}
+     <span class="small muted">คะแนนเต็มต่อข้อ</span><input class="inp sm" type="number" id="sp-pts" value="5" min="0.5" step="0.5" style="width:70px"></div>
+    <div class="row small" style="margin-bottom:6px"><button type="button" class="btn btn-sm" id="sp-all">เลือกทั้งหมด</button><button type="button" class="btn btn-sm" id="sp-none">ไม่เลือก</button></div>
+    <div id="sp-list" style="max-height:52vh;overflow:auto;border:1px solid var(--line);border-radius:10px"></div>`;
+  const pr=dialog({title,body,actions:[{label:'ยกเลิก',value:null},{label:'<i class="fa-solid fa-plus"></i> เพิ่มที่เลือก',value:'ok',cls:'btn-primary'}]});
+  $('.modal-card').style.maxWidth='640px';
+  const draw=()=>{ const only=preCat==null?null:+$('#sp-cat').value;
+    $('#sp-list').innerHTML=cats.filter(c=>only==null||c.id===only).map(c=>`<div style="padding:8px 12px;background:#f6f5f1;font-weight:600;font-size:12.5px">หมวด ${c.id} • ${esc(c.name)}</div>`+c.items.map(it=>{ const k='cl:'+it.no, dis=used.has(k);
+      return `<label class="checkrow" style="border-top:1px solid var(--line2);border-radius:0;${dis?'opacity:.5':''}"><input type="checkbox" value="${esc(it.no)}" ${dis?'disabled':only!=null?'checked':''}><span><b style="color:var(--navy)">${esc(it.no)}</b> ${esc(it.task)}${dis?' <span class="small muted">(มีแล้ว)</span>':''}<br><span class="small muted">${esc(it.crit)}</span></span></label>`; }).join('')).join(''); };
+  draw(); if($('#sp-cat')) $('#sp-cat').onchange=draw;
+  $('#sp-all').onclick=()=>$$('#sp-list input:not(:disabled)').forEach(x=>x.checked=true); $('#sp-none').onclick=()=>$$('#sp-list input').forEach(x=>x.checked=false);
+  const res=await pr; $('.modal-card').style.maxWidth=''; if(!res) return null;
+  const pts=Math.max(0.5,Math.round((parseFloat($('#sp-pts').value)||5)*2)/2);
+  const picked=$$('#sp-list input:checked').map(x=>jobItems(job).find(i=>i.no===x.value)).filter(Boolean);
+  return {pts,cat:preCat==null?null:+($('#sp-cat')||{}).value,items:picked.map(it=>({key:'cl:'+it.no,task:it.task,ev:it.crit||'ภาพถ่าย / ค่าที่วัดตามเกณฑ์',max:pts}))};
+}
+async function scAction(act,el){
+  const def=scDefOwn(); const ci=el?.closest('[data-ci]')?+el.closest('[data-ci]').dataset.ci:null; const c=ci!=null?def[ci]:null;
+  if(act==='edit'){ ui.scEdit=true; paneScore(); return; }
+  if(act==='done'){ ui.scEdit=false; paneScore(); renderPMSide(); return; }
+  if(act==='delcat'){ if(!(await confirmBox('ลบหัวข้อหลัก',`ลบ <b>${esc(c.name)}</b> และหัวข้อย่อย ${c.items.length} ข้อ?<br><span class="small muted">คะแนนที่ให้ไว้ในหัวข้อเหล่านี้จะถูกลบ</span>`,'ลบ',true))) return; c.items.forEach(i=>delete job.sc.items[i.key]); def.splice(ci,1); }
+  else if(act==='delitem'){ const ii=+el.closest('[data-ii]').dataset.ii; const it=c.items[ii]; delete job.sc.items[it.key]; c.items.splice(ii,1); }
+  else if(act==='additems'){ const r=await scPickChecklist(`เพิ่มหัวข้อย่อยจาก Checklist → ${c.name}`,null); if(!r||!r.items.length) return; c.items.push(...r.items); toast(`เพิ่ม ${r.items.length} หัวข้อย่อยแล้ว`,'ok'); }
+  else if(act==='addcat'){ const first=jobCats(job).find(x=>x.items.length); const r=await scPickChecklist('เพิ่มหัวข้อหลักจาก Checklist 13 หมวด',first?first.id:1); if(!r||!r.items.length) return; const cc=CL.find(x=>x.id===r.cat);
+    def.splice(def.findIndex(x=>x.report)<0?def.length:def.findIndex(x=>x.report),0,{id:'c'+uid(),name:cc?`${cc.name} – ${cc.th}`:'หัวข้อใหม่',report:false,src:r.cat,items:r.items}); toast(`เพิ่มหัวข้อหลัก ${cc?cc.name:''} (${r.items.length} หัวข้อย่อย)`,'ok'); }
+  else if(act==='addcatcustom'||act==='addcustom'){
+    const isCat=act==='addcatcustom';
+    const ok=await dialog({title:isCat?'เพิ่มหัวข้อหลักเอง':`เพิ่มหัวข้อย่อย → ${c.name}`,body:`<div class="fgrid f2" style="margin-top:6px">${isCat?'<div class="span4"><label class="lbl">ชื่อหัวข้อหลัก <span class="req">*</span></label><input class="inp" id="sx-cat"></div>':''}
+      <div class="span4"><label class="lbl">หัวข้อย่อย ${isCat?'(ข้อแรก)':''} <span class="req">*</span></label><input class="inp" id="sx-task"></div>
+      <div class="span4"><label class="lbl">หลักฐานบังคับแนบ</label><input class="inp" id="sx-ev" placeholder="เช่น ภาพถ่าย Before/After"></div>
+      <div><label class="lbl">คะแนนเต็ม</label><input class="inp" type="number" id="sx-max" value="5" min="0.5" step="0.5"></div></div>`,actions:[{label:'ยกเลิก',value:false},{label:'เพิ่ม',value:true,cls:'btn-primary'}]});
+    if(!ok) return; const task=$('#sx-task').value.trim(); const nm=isCat?$('#sx-cat').value.trim():''; if(!task||(isCat&&!nm)){ toast('กรุณากรอกข้อมูลให้ครบ','error'); return; }
+    const item={key:'x:'+uid(),task,ev:$('#sx-ev').value.trim(),max:Math.max(0.5,Math.round((parseFloat($('#sx-max').value)||5)*2)/2)};
+    if(isCat) def.splice(def.findIndex(x=>x.report)<0?def.length:def.findIndex(x=>x.report),0,{id:'c'+uid(),name:nm,report:false,items:[item]}); else c.items.push(item); }
+  else if(act==='savetpl'){ db.settings.scTemplate=clone(def); touch(); toast('บันทึกเป็นแบบมาตรฐานแล้ว – งาน PM ใหม่จะใช้หัวข้อชุดนี้','ok'); return; }
+  else if(act==='reset'){ const ch=await dialog({title:'คืนค่าหัวข้อประเมิน',body:'เลือกชุดหัวข้อที่จะใช้กับงานนี้<br><span class="small muted">คะแนนของหัวข้อที่ไม่มีในชุดใหม่จะถูกลบ</span>',actions:[{label:'ยกเลิก',value:null},...(db.settings.scTemplate?[{label:'แบบมาตรฐานที่บันทึกไว้',value:'tpl'}]:[]),{label:'Scorecard เดิม (12+2 ข้อ)',value:'orig',cls:'btn-primary'}]});
+    if(!ch) return; job.sc.def=ch==='tpl'?templateScDef():defaultScDef(); if(ch==='orig'&&db.settings.scTemplate&&await confirmBox('แบบมาตรฐาน','ต้องการคืนค่าแบบมาตรฐานสำหรับงานถัดไปเป็น Scorecard เดิมด้วยหรือไม่?','คืนค่าด้วย')){ delete db.settings.scTemplate; touch(); }
+    const keys=new Set(job.sc.def.flatMap(x=>x.items.map(i=>i.key))); Object.keys(job.sc.items).forEach(k=>{ if(!keys.has(k)) delete job.sc.items[k]; }); }
+  paneScore(); jobChanged({steps:true});
+}
+function scDefInput(t){
+  const def=scDefOwn(); const ci=+t.closest('[data-ci]').dataset.ci; const c=def[ci]; const f=t.dataset.scdef;
+  if(f==='catname'){ c.name=t.value; }
+  else { const it=c.items[+t.closest('[data-ii]').dataset.ii]; if(f==='max'){ const v=Math.round((parseFloat(t.value)||0)*2)/2; if(v>0){ it.max=v; const cur=job.sc.items[it.key]; if(cur&&cur.s!==''&&+cur.s>v) cur.s=v; } } else it[f]=t.value; }
+  jobChanged();
+}
 
 /* ----- side panel ----- */
 function renderPMSide(){
@@ -1337,7 +1482,7 @@ function renderPMSide(){
     <h3 style="font-size:16px;margin:2px 0 2px">${esc(job.info.site)||'<span class="muted">ยังไม่ระบุ Site</span>'}</h3>
     <div class="small muted">${fmtRange(job.info)} · ${esc(job.info.team)||'—'}</div>
     <div class="ring-wrap mt"><div class="ring"><svg width="104" height="104"><circle cx="52" cy="52" r="${R}" fill="none" stroke="#eef1f6" stroke-width="10"/><circle cx="52" cy="52" r="${R}" fill="none" stroke="var(--brand)" stroke-width="10" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct/100)}"/></svg><div class="rv"><div><b class="num">${n0(pct)}%</b><br><span>Checklist</span></div></div></div>
-      <div class="small" style="line-height:1.9"><div><span class="badge b-pass">P ${cl.P}</span> <span class="badge b-fail">O ${cl.O}</span></div><div><span class="badge b-wait">N/A ${cl.NA}</span> <span class="muted num">${cl.done}/${CL_TOTAL}</span></div></div></div>
+      <div class="small" style="line-height:1.9"><div><span class="badge b-pass">P ${cl.P}</span> <span class="badge b-fail">O ${cl.O}</span></div><div><span class="badge b-wait">N/A ${cl.NA}</span> <span class="muted num">${cl.done}/${cl.total}</span></div></div></div>
     <ul class="stat-list">
       <li><span>ความปลอดภัยก่อนเริ่มงาน</span><b class="num" style="color:${cl.pre===PRE_CHECKS.length?'var(--ok)':'var(--warn)'}">${cl.pre}/${PRE_CHECKS.length}</b></li>
       <li><span>ปิดงานก่อนออกจากหน้างาน</span><b class="num" style="color:${cl.post===POST_CHECKS.length?'var(--ok)':'var(--warn)'}">${cl.post}/${POST_CHECKS.length}</b></li>
@@ -1348,11 +1493,11 @@ function renderPMSide(){
     <div class="row" style="justify-content:space-between"><span class="small muted" style="font-weight:600;text-transform:uppercase;letter-spacing:.05em">Net Quality Score</span><span class="badge b-navy">${AUDIT_TYPES[job.sc.auditType]}</span></div>
     <div style="font-family:var(--head);font-size:40px;font-weight:600;line-height:1.1;margin-top:4px" class="num">${sc.scored?fmtPts(sc.net):'—'}<span style="font-size:16px;color:var(--mute)"> /100</span></div>
     <ul class="stat-list">
-      <li><span>คุณภาพหน้างาน (หมวด 1–4)</span><b class="num">${fmtPts(sc.fieldGross)} / 90</b></li>
+      <li><span>คุณภาพหน้างาน${sc.fieldMax&&sc.fieldMax!==90?` <span class="muted">(ดิบ ${fmtPts(sc.fieldRaw)}/${fmtPts(sc.fieldMax)})</span>`:''}</span><b class="num">${fmtPts(sc.fieldGross)} / 90</b></li>
       <li><span>PM Report พร้อมส่งลูกค้า</span><b class="num" style="color:${sc.repDone?'inherit':'var(--warn)'}">${sc.repDone?fmtPts(sc.repGross):'รอ'} / 10</b></li>
       <li><span>Penalty</span><b class="num" style="color:${sc.ded?'var(--bad)':'inherit'}">${sc.ded?'−'+sc.ded:'0'}</b></li>
     </ul>
-    ${SC.map((c,i)=>`<div class="small" style="margin-top:8px;display:flex;justify-content:space-between"><span>${c.id}. ${c.name.replace('PM Report & Customer Submission','PM Report')}</span><span class="num">${fmtPts(sc.cats[i].score)}/${fmtPts(c.weight)}</span></div><div class="minibar"><i style="width:${sc.cats[i].score/c.weight*100}%;${c.report?'background:var(--accent)':''}"></i></div>`).join('')}
+    ${[...sc.cats.filter(c=>!c.report),...sc.cats.filter(c=>c.report)].map((c,i)=>`<div class="small" style="margin-top:8px;display:flex;justify-content:space-between;gap:6px"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i+1}. ${esc(c.name.replace('PM Report & Customer Submission','PM Report'))}</span><span class="num">${fmtPts(c.score)}/${fmtPts(c.max)}</span></div><div class="minibar"><i style="width:${c.max?c.score/c.max*100:0}%;${c.report?'background:var(--accent)':''}"></i></div>`).join('')}
     <div class="status-big ${stCls}" style="${sc.status==='REPORT'||sc.status==='WAIT'?'letter-spacing:.02em;font-size:16px;':''}${sc.status==='REPORT'?'background:var(--warn-l);color:var(--warn)':''}">${STATUS_TXT[sc.status]}</div>
     ${sc.status==='REPORT'?`<div class="small muted" style="margin-top:6px;text-align:center">คะแนนชั่วคราว ${fmtPts(sc.net)} – รอคะแนน PM Report 10 คะแนนสุดท้าย</div>`:''}
    </div>
@@ -1373,11 +1518,12 @@ function bindPM(){
       if(d.info==='date'){ const e2=$('[data-info=endDate]'); if(t.value && (!job.info.endDate||job.info.endDate<t.value)){ job.info.endDate=t.value; if(e2) e2.value=t.value; } if(e2) e2.min=t.value; }
       if(d.info==='date'||d.info==='endDate'){ const n=$('#pm-days'); if(n) n.innerHTML=daysNote(); } jobChanged({steps:d.info==='site'||d.info==='date'}); }
     else if(d.sign){ job.sign[d.sign]=t.value; jobChanged(); }
-    else if(d.val){ const no=d.val; job.cl[no]={...(job.cl[no]||{r:'',n:''}),v:t.value}; const it=CL_ITEMS.find(x=>x.no===no); const m=t.closest('.measure'); if(m) m.classList.toggle('out',isOut(it,t.value)); jobChanged(); }
+    else if(d.val){ const no=d.val; job.cl[no]={...(job.cl[no]||{r:'',n:''}),v:t.value}; const it=jobItems(job).find(x=>x.no===no)||{}; const m=t.closest('.measure'); if(m) m.classList.toggle('out',isOut(it,t.value)); jobChanged(); }
     else if(d.note){ job.cl[d.note]={...(job.cl[d.note]||{r:'',v:''}),n:t.value}; jobChanged(); }
     else if(d.if){ const card=t.closest('[data-iss]'); const k=+card.dataset.iss; job.issues[k][d.if]=t.value; job.issues[k].auto=false; if(d.if==='sev') card.className='issue-card sev-'+t.value; jobChanged(); }
     else if(d.score){ if(t.value==='') { job.sc.items[d.score]={...(job.sc.items[d.score]||{ev:true,rm:''}),s:''}; refreshCatSums(); } else setScore(d.score,t.value); jobChanged({steps:true}); }
     else if(d.rm){ job.sc.items[d.rm]={...(job.sc.items[d.rm]||{s:'',ev:true}),rm:t.value}; jobChanged(); }
+    else if(d.scdef){ scDefInput(t); }
     else if(d.sc){ job.sc[d.sc]=t.value; jobChanged(); }
   });
   root.addEventListener('change',e=>{
@@ -1395,9 +1541,10 @@ function bindPM(){
     else if(d.addtag){ addTag(d.addtag,null); }
     else if(d.addteam){ fillFromTeam(true); refreshTags(); jobChanged(); }
     else if(d.rmtag!=null){ job.info.members.splice(+d.rmtag,1); refreshTags(); jobChanged(); }
-    else if(d.step){ const no=b.closest('.sc-item').dataset.scno; const cur=job.sc.items[no]; if(cur?.ev===false) return; const v=(cur&&cur.s!==''&&cur.s!=null)?+cur.s:(d.step>0?-0.5:SC_ITEMS.find(x=>x.no===no).max+0.5); setScore(no,v+ (+d.step)*0.5); jobChanged({steps:true}); }
-    else if(d.full){ const it=SC_ITEMS.find(x=>x.no===d.full); if(job.sc.items[d.full]?.ev===false) return; setScore(d.full,it.max); jobChanged({steps:true}); }
+    else if(d.step){ const no=b.closest('.sc-item').dataset.scno; const cur=job.sc.items[no]; if(cur?.ev===false) return; const v=(cur&&cur.s!==''&&cur.s!=null)?+cur.s:(d.step>0?-0.5:(+(scItem(no)||{max:0}).max)+0.5); setScore(no,v+ (+d.step)*0.5); jobChanged({steps:true}); }
+    else if(d.full){ const it=scItem(d.full); if(!it) return; if(job.sc.items[d.full]?.ev===false) return; setScore(d.full,it.max); jobChanged({steps:true}); }
     else if(d.ev){ const no=d.ev; const cur=job.sc.items[no]||{s:'',ev:true,rm:''}; cur.ev=cur.ev===false; if(!cur.ev) cur.s=0; job.sc.items[no]=cur; paneScore(); jobChanged({steps:true}); }
+    else if(d.scact){ scAction(d.scact,b); }
     else if(d.audit){ job.sc.auditType=d.audit; $$('[data-audit]').forEach(x=>x.classList.toggle('on',x===b)); jobChanged(); }
   });
   root.addEventListener('keydown',e=>{ const t=e.target; if(t.dataset.taginput!=null){ if(e.key==='Enter'||e.key===','){ e.preventDefault(); addTag(t.value,t); } else if(e.key==='Backspace'&&!t.value&&job.info.members?.length){ job.info.members.pop(); refreshTags(); jobChanged(); $('.pane.on [data-taginput]')?.focus(); } } });
@@ -1427,6 +1574,7 @@ function saveJob(){
   const k=jobCalc(job); job.summary={net:k.sc.net,status:k.sc.status,clDone:k.cl.done,O:k.cl.O};
   const idx=db.jobs.findIndex(x=>x.id===job.id); const copy=clone(job);
   if(idx>=0) db.jobs[idx]=copy; else db.jobs.push(copy);
+  if(typeof auLinkOnSave==='function') auLinkOnSave(copy);
   const known=new Set(peopleList()); const jt=findTeam(job.info.team);
   (job.info.members||[]).forEach(m=>{ if(known.has(m)) return; if(jt) jt.members.push(m); else db.settings.unassigned.push(m); known.add(m); });
   dirty=false; try{ localStorage.removeItem(DRAFT_KEY); }catch(e){}
@@ -1457,7 +1605,7 @@ function renderRecords(){
     <td><b>${esc(j.info.site)}</b> ${j.sample?'<span class="badge b-sample">ตัวอย่าง</span>':''}${j.legacy?'<span class="badge b-wait">v1</span>':''}<div class="small muted">${esc(j.info.capacity?j.info.capacity+' kWp':'')}</div></td>
     <td>${esc(j.info.team)||'—'}<div class="small muted">${esc((j.info.members||[]).join(', '))}</div></td>
     <td class="small">${j.legacy?'—':(j.sc.auditType==='field'?'<span class="badge b-navy">Field 20%</span>':'<span class="badge b-wait">Online</span>')}</td>
-    <td class="c num">${k.cl.done}/${CL_TOTAL}${k.cl.O?` <span class="badge b-fail">O ${k.cl.O}</span>`:''}</td>
+    <td class="c num">${k.cl.done}/${k.cl.total}${k.cl.O?` <span class="badge b-fail">O ${k.cl.O}</span>`:''}</td>
     <td class="c num">${open?`<span class="badge b-warn">${open}</span>`:'<span class="muted">0</span>'}</td>
     <td class="r num">${k.sc.scored?fmtPts(k.sc.fieldGross):'—'}</td><td class="r num">${k.sc.repDone&&!j.legacy?fmtPts(k.sc.repGross):'<span class="muted">—</span>'}</td>
     <td class="r num"><b>${k.sc.scored?fmtPts(k.sc.net):'—'}</b>${k.sc.ded?`<div class="small" style="color:var(--bad)">−${k.sc.ded}</div>`:''}</td>
@@ -1573,30 +1721,435 @@ function saveCM(){ const t=ui.cmEdit; if(!t.site.trim()||!t.issue.trim()){ toast
 function closeCM(id){ const t=db.cm.find(x=>x.id===id); t.status='Closed'; t.closed=nowLocal(); touch(); renderCM(); toast(`ปิดงาน ${t.ticket} · ${slaState(t).label}`,'ok'); }
 async function deleteCM(id){ if(!(await confirmBox('ลบงาน CM','ต้องการลบงานนี้หรือไม่?','ลบ',true))) return; db.cm=db.cm.filter(x=>x.id!==id); touch(); renderCM(); }
 
+</script>
+<script>
+'use strict';
 /* =====================================================================
-   ROSTER
+   FIELD AUDIT PLAN – แผนสุ่มตรวจหน้างาน (Senior / Manager)
+   ดึงแผน PM จาก Smart O&M Calendar (Supabase, อ่านอย่างเดียว) แล้วจัดแผนตรวจ
+   วันพฤหัส–ศุกร์ วันละ 1 โครงการ · แก้ไขได้ · เช็คตรวจแล้ว · เชื่อมคะแนนจากงาน PM
    ===================================================================== */
-function rosterCls(v){ const s=(v||'').toLowerCase(); if(s.includes('standby')) return 'cell-standby'; if(/leave|ลา|meeting|off|หยุด/.test(s)) return 'cell-off'; if(s) return 'cell-pm'; return ''; }
-function renderRoster(){
-  const wk=ui.roWeek||(ui.roWeek=isoWeek()); const rows=db.roster[wk]||[]; const mon=weekMonday(wk);
-  const dates=DAYS.map((d,i)=>{ const x=new Date(mon); x.setUTCDate(mon.getUTCDate()+i); return `${x.getUTCDate()}/${x.getUTCMonth()+1}`; });
-  const sat=new Date(mon); sat.setUTCDate(mon.getUTCDate()+5);
-  $('#ro-week').textContent=`Week ${wk.split('-W')[1]} · ${mon.getUTCDate()} ${MTH[mon.getUTCMonth()]} – ${sat.getUTCDate()} ${MTH[sat.getUTCMonth()]} ${String(sat.getUTCFullYear()+543).slice(2)}`;
-  $('#ro-table').innerHTML=`<table class="tbl roster"><thead><tr><th style="min-width:130px">ทีม</th><th style="min-width:110px">หัวหน้าทีม</th><th style="min-width:150px">Role (SLA Focus)</th>${DAYS.map((d,i)=>`<th style="min-width:110px">${d[1]} <span style="font-weight:400;text-transform:none">${dates[i]}</span></th>`).join('')}<th></th></tr></thead><tbody>
-   ${rows.map((r,i)=>`<tr data-ro="${i}"><td><input data-rk="team" value="${esc(r.team)}" style="font-weight:600" list="dl-teams"></td><td><input data-rk="leader" value="${esc(r.leader)}" list="dl-people-ro"></td>
-    <td><select data-rk="role" class="${r.role.startsWith('CM Express')?'cell-standby':''}">${ROSTER_ROLES.map(x=>`<option ${x===r.role?'selected':''}>${x}</option>`).join('')}</select></td>
-    ${DAYS.map(([k])=>`<td><input data-rk="${k}" value="${esc(r[k])}" class="${rosterCls(r[k])}"></td>`).join('')}
-    <td><button class="btn btn-sm btn-icon btn-danger" onclick="rosterDel(${i})"><i class="fa-regular fa-trash-can"></i></button></td></tr>`).join('') || `<tr><td colspan="10"><div class="empty">ยังไม่มีตารางสำหรับสัปดาห์นี้ – กด “คัดลอกจากสัปดาห์ก่อน” หรือ “เพิ่มแถว”</div></td></tr>`}
-   </tbody></table><datalist id="dl-people-ro">${peopleList().map(p=>`<option value="${esc(p)}">`).join('')}</datalist><datalist id="dl-teams">${teamsList().map(t=>`<option value="${esc(t)}">`).join('')}</datalist>`;
-  $('#ro-table').oninput=$('#ro-table').onchange=e=>{ const t=e.target, k=t.dataset.rk; if(!k) return; const i=+t.closest('[data-ro]').dataset.ro; db.roster[wk][i][k]=t.value; if(k==='team'&&e.type==='change'){ const tm=findTeam(t.value); if(tm&&tm.leader&&!db.roster[wk][i].leader){ db.roster[wk][i].leader=tm.leader; t.closest('tr').querySelector('[data-rk=leader]').value=tm.leader; } } if(DAYS.some(d=>d[0]===k)) t.className=rosterCls(t.value); if(k==='role') t.className=t.value.startsWith('CM Express')?'cell-standby':''; touch(); };
+const CAL_DEFAULT = { url:'https://vgtagmuxwqvqepnrjgau.supabase.co', anonKey:'sb_publishable_G0ysUfXSY6T_kbJORFCdiw_r3Vij4WV', web:'https://jirayu-max.github.io/greenergy-om/' };
+const AU_STATUS = { planned:['วางแผนแล้ว','b-info'], done:['ตรวจแล้ว','b-pass'], postponed:['เลื่อน','b-warn'], cancelled:['ยกเลิก','b-wait'] };
+const DOW_TH = ['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.'];
+const DOW_FULL = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+const MTH_FULL = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const AU_FROM = '2026-11';
+
+function auCfg(){
+  db.auditCfg = Object.assign({days:[4,5],timeStart:'09:00',timeEnd:'16:00',inspectors:[db.settings.manager].filter(Boolean),fromMonth:AU_FROM,includeCM:false,autoSync:true,url:CAL_DEFAULT.url,anonKey:CAL_DEFAULT.anonKey,skipDays:[],nameMap:{}}, db.auditCfg||{});
+  if(!db.auditCfg.nameMap) db.auditCfg.nameMap={};
+  if(!Array.isArray(db.audits)) db.audits=[];
+  if(!db.calSync) db.calSync={items:[],at:null,source:'',holidays:[]};
+  return db.auditCfg;
 }
-function rosterWeek(n){ ui.roWeek = n===0 ? isoWeek() : shiftWeek(ui.roWeek||isoWeek(),n); renderRoster(); }
-function rosterAdd(){ const wk=ui.roWeek; (db.roster[wk]=db.roster[wk]||[]).push({team:'',leader:'',role:'PM Routine',mon:'',tue:'',wed:'',thu:'',fri:'',sat:''}); touch(); renderRoster(); }
-function rosterDel(i){ db.roster[ui.roWeek].splice(i,1); touch(); renderRoster(); }
-async function rosterCopyPrev(){ const wk=ui.roWeek; const weeks=Object.keys(db.roster).filter(w=>w<wk&&db.roster[w].length).sort(); const src=weeks[weeks.length-1];
-  if(!src){ toast('ไม่พบตารางของสัปดาห์ก่อนหน้า','warn'); return; }
-  if(db.roster[wk]?.length && !(await confirmBox('คัดลอกตาราง',`แทนที่ตารางสัปดาห์นี้ด้วยข้อมูลจาก Week ${src.split('-W')[1]} ?`,'แทนที่'))) return;
-  db.roster[wk]=clone(db.roster[src]); touch(); renderRoster(); toast(`คัดลอกจาก Week ${src.split('-W')[1]} แล้ว`,'ok'); }
+const isoOf = v => { const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(v||'')); return m?`${m[1]}-${m[2]}-${m[3]}`:''; };
+const addDaysISO = (iso,n) => { const d=new Date(iso+'T00:00:00'); d.setDate(d.getDate()+n); return isoDate(d); };
+const dowOf = iso => new Date(iso+'T00:00:00').getDay();
+const normName = s => String(s||'').toLowerCase().replace(/[\s\-_.()/]+/g,'');
+const opsOfItem = r => Array.isArray(r.operators)&&r.operators.length ? r.operators.filter(Boolean) : (r.operator?String(r.operator).split(/\s*,\s*/).filter(Boolean):[]);
+const hashStr = s => { let h=2166136261; for(const c of s){ h^=c.charCodeAt(0); h=Math.imul(h,16777619); } return (h>>>0)/4294967296; };
+const shortTxt = (t,n=38) => { t=String(t||'').replace(/\s+/g,' ').trim(); return t.length>n ? t.slice(0,n-1)+'…' : t; };
+const auDetail = a => a.detail || a.activity || '';
+const auProjName = a => a.project || (a.unspecified?'ไม่ระบุงาน':'');
+const fmtDateShort = iso => { if(!iso) return '—'; const [y,m,d]=iso.split('-'); return `${+d} ${MTH[+m-1]}`; };
+
+/* ---------- Supabase connection (read-only) ---------- */
+let SB=null, calBusy=false, calTimer=null, calSessionEmail='';
+function sbClient(){
+  if(!window.supabase||!window.supabase.createClient) return null;
+  if(!SB){ const c=auCfg(); SB=window.supabase.createClient(c.url,c.anonKey,{auth:{persistSession:true,autoRefreshToken:true,storageKey:'greenergy_om_calendar_auth'}}); }
+  return SB;
+}
+async function calSession(){ const sb=sbClient(); if(!sb) return null; try{ const {data}=await sb.auth.getSession(); calSessionEmail=data?.session?.user?.email||''; return data?.session||null; }catch(e){ return null; } }
+async function calLogin(){
+  const email=$('#cal-email').value.trim(), pw=$('#cal-pw').value; auCfg().lastEmail=email;
+  if(!email||!pw){ toast('กรุณากรอกอีเมลและรหัสผ่านของเว็บ Smart O&M','error'); return; }
+  const sb=sbClient(); if(!sb){ toast('โหลดไลบรารีเชื่อมต่อคลาวด์ไม่สำเร็จ – ต้องเชื่อมต่ออินเทอร์เน็ต','error'); return; }
+  loading(true,'กำลังเชื่อมต่อ Smart O&M Calendar…');
+  try{ const {error}=await sb.auth.signInWithPassword({email,password:pw}); if(error) throw error; $('#cal-pw').value=''; await calSync(true); }
+  catch(e){ toast('เชื่อมต่อไม่สำเร็จ: '+(e.message||e),'error'); }
+  finally{ loading(false); renderAudit(); }
+}
+async function calLogout(){ const sb=sbClient(); if(sb){ try{ await sb.auth.signOut(); }catch(e){} } calSessionEmail=''; toast('ตัดการเชื่อมต่อแล้ว (ข้อมูลแผนที่ดึงไว้ยังอยู่)','ok'); renderAudit(); }
+async function calSync(manual){
+  if(calBusy) return; const sess=await calSession();
+  if(!sess){ if(manual) toast('ยังไม่ได้เชื่อมต่อ – กรุณาล็อกอินด้วยบัญชีเว็บ Smart O&M','warn'); return; }
+  calBusy=true; if(manual) loading(true,'กำลังซิงก์แผนงานจาก Smart O&M Calendar…');
+  try{
+    const {data,error}=await sbClient().from('app_data').select('key,value').in('key',['ppm','records','holidays']);
+    if(error) throw error;
+    if(!data||!data.length) throw new Error('บัญชีนี้ยังไม่มีสิทธิ์อ่านข้อมูล (ติดต่อผู้ดูแลเว็บ Smart O&M)');
+    const map=Object.fromEntries(data.map(r=>[r.key,r.value]));
+    applySchedule(map.ppm||[],map.records||[],map.holidays||[],'cloud',manual);
+  }catch(e){ if(manual) toast('ซิงก์ไม่สำเร็จ: '+(e.message||e),'error'); console.warn('calSync',e); }
+  finally{ calBusy=false; if(manual) loading(false); }
+}
+function applySchedule(ppm,records,holidays,source,announce){
+  const items=[];
+  (Array.isArray(ppm)?ppm:[]).forEach(r=>{ const s=isoOf(r.start); if(!s||!r.plant) return; let e=isoOf(r.end); if(!e||e<s) e=addDaysISO(s,Math.max(0,(+r.days||1)-1));
+    items.push({key:'ppm:'+r.pid,src:'ppm',project:String(r.plant).trim(),activity:r.activity||'',type:r.type||'PPM',round:r.round||'',start:s,end:e,team:r.team||'',ops:opsOfItem(r),wo:r.workOrder||'',owner:r.owner||'',status:r.status||''}); });
+  (Array.isArray(records)?records:[]).forEach(r=>{ if(r.ppmPid!=null) return; const s=isoOf(r.date); if(!s||!r.project) return; let e=isoOf(r.finish); if(!e||e<s) e=s;
+    items.push({key:'job:'+r.id,src:'job',project:String(r.project).trim(),activity:(r.jobDescriptions&&r.jobDescriptions[0])||r.typeOfWork||'',type:r.typeOfWork||'CM',round:'',start:s,end:e,team:'',ops:opsOfItem(r),wo:r.workOrder||'',owner:r.owner||'',status:r.status||''}); });
+  db.calSync={items,at:new Date().toISOString(),source:source==='cloud'?('cloud:'+calSessionEmail):source,holidays:(Array.isArray(holidays)?holidays:[]).filter(h=>h&&h.date).map(h=>({date:isoOf(h.date),name:h.name||'วันหยุด'}))};
+  const res=refreshPlans();
+  touch(); if(ui.tab==='audit') renderAudit();
+  if(announce||res.added||res.updated||res.repicked) toast(`ซิงก์แล้ว ${items.filter(i=>i.src==='ppm').length} งาน PM&AN · แผนใหม่ ${res.added} · อัปเดต ${res.updated}${res.repicked?` · เปลี่ยนโครงการ ${res.repicked}`:''}`,'ok');
+}
+function calAutoStart(){
+  clearInterval(calTimer);
+  calTimer=setInterval(()=>{ if(document.visibilityState==='visible' && auCfg().autoSync) calSync(false); },10*60e3);
+  calSession().then(s=>{ if(s && auCfg().autoSync){ const age=db.calSync?.at?Date.now()-new Date(db.calSync.at):Infinity; if(age>5*60e3) calSync(false); } if(ui.tab==='audit') renderAudit(); });
+}
+
+/* ---------- Plan generation & sync ---------- */
+const auHoliday = iso => (db.calSync?.holidays||[]).find(h=>h.date===iso);
+function itemsOn(iso){ const c=auCfg(); return (db.calSync?.items||[]).filter(i=>i.start<=iso&&i.end>=iso&&(c.includeCM||i.src==='ppm')); }
+function auditDaysOf(month){ const c=auCfg(); const [y,m]=month.split('-').map(Number); const n=new Date(y,m,0).getDate(); const out=[];
+  for(let d=1;d<=n;d++){ const iso=`${month}-${pad(d)}`; if(c.days.includes(dowOf(iso))) out.push(iso); } return out; }
+function pickItem(iso,taken){
+  const cands=itemsOn(iso); if(!cands.length) return null;
+  const month=iso.slice(0,7); const mAud=db.audits.filter(a=>a.date.startsWith(month)&&a.status!=='cancelled'&&!(taken&&taken.has(a.id)));
+  const usedP=new Set(mAud.map(a=>normName(a.project))), usedT=new Set(mAud.map(a=>normName(a.team)).filter(Boolean)), usedS=new Set(mAud.flatMap(a=>String(a.supervisor||'').split(/\s*,\s*/)).map(normName).filter(Boolean));
+  const score=it=>(usedP.has(normName(it.project))?100:0)+(it.team&&usedT.has(normName(it.team))?25:0)+it.ops.reduce((s,o)=>s+(usedS.has(normName(mapName(o)))?15:0),0)+(it.start===iso?5:0)+(it.ops.length?0:8)+hashStr(iso+it.key)*10;
+  return cands.slice().sort((a,b)=>score(a)-score(b))[0];
+}
+const mapName = n => (auCfg().nameMap||{})[n] || n;
+const itemSup = it => it.ops.map(mapName).join(', ');
+function auFromItem(a,it){ a.project=it.project; a.supervisor=itemSup(it); a.team=it.team; a.planStart=it.start; a.planEnd=it.end; a.activity=[it.type,it.activity].filter(Boolean).join(' · '); a.wo=it.wo; a.srcKey=it.key; a.stale=false; }
+function newAudit(iso){ const c=auCfg(); return {id:uid(),date:iso,timeStart:c.timeStart,timeEnd:c.timeEnd,project:'',detail:'',unspecified:false,supervisor:'',team:'',planStart:'',planEnd:'',activity:'',wo:'',inspector:c.inspectors[0]||'',status:'planned',jobId:null,note:'',srcKey:'',edited:false,stale:false,doneAt:''}; }
+function auMonthsToFill(){ const c=auCfg(); const items=db.calSync?.items||[]; const lastEnd=items.reduce((m,i)=>i.end>m?i.end:m,''); let to=addMonths(curMonth(),1); if(lastEnd && lastEnd.slice(0,7)>to) to=lastEnd.slice(0,7); const from=c.fromMonth||AU_FROM; return from<=to?monthRange(from,to).slice(0,18):[]; }
+function refreshPlans(onlyMonth){
+  const c=auCfg(); const res={added:0,updated:0,repicked:0}; const byKey=new Map((db.calSync?.items||[]).map(i=>[i.key,i]));
+  db.audits=db.audits.filter(a=>!(a.status==='planned'&&!a.edited&&!a.jobId&&auHoliday(a.date)));
+  db.audits.forEach(a=>{
+    if(a.status!=='planned'||a.edited||!a.srcKey) return;
+    const it=byKey.get(a.srcKey);
+    if(it && it.start<=a.date && it.end>=a.date){ const before=JSON.stringify([a.project,a.supervisor,a.team,a.planStart,a.planEnd,a.activity]); auFromItem(a,it); if(before!==JSON.stringify([a.project,a.supervisor,a.team,a.planStart,a.planEnd,a.activity])) res.updated++; }
+    else { const nit=pickItem(a.date,new Set([a.id])); if(nit){ auFromItem(a,nit); res.repicked++; } else { a.stale=true; } }
+  });
+  (onlyMonth?[onlyMonth]:auMonthsToFill()).forEach(m=>auditDaysOf(m).forEach(iso=>{
+    if(c.skipDays.includes(iso)||auHoliday(iso)) return;
+    if(db.audits.some(a=>a.date===iso)) return;
+    const it=pickItem(iso); if(!it) return;
+    const a=newAudit(iso); auFromItem(a,it); db.audits.push(a); res.added++;
+  }));
+  return res;
+}
+async function auGenerate(){
+  const m=ui.auMonth; const c=auCfg();
+  if(!(db.calSync?.items||[]).length){ toast('ยังไม่มีข้อมูลแผน PM – เชื่อมต่อ Smart O&M Calendar หรือนำเข้าไฟล์ Export JSON ก่อน','warn'); return; }
+  const editable=db.audits.filter(a=>a.date.startsWith(m)&&a.status==='planned'&&!a.edited);
+  const ch=await dialog({title:`สร้างแผนสุ่มตรวจ ${MTH_FULL[+m.slice(5)-1]} ${+m.slice(0,4)+543}`,body:`จัดโครงการให้ทุกวัน${c.days.map(d=>DOW_FULL[d]).join(' และ ')} วันละ 1 โครงการ จากงาน PM ที่อยู่ในช่วงแผนของวันนั้น (หลีกเลี่ยงโครงการ/ทีม/ผู้ควบคุมงานซ้ำในเดือนเดียวกัน)<br><br><b>เติมวันที่ว่าง</b> = เก็บแผนเดิมไว้ทั้งหมด<br><b>สุ่มใหม่</b> = จัดใหม่เฉพาะแผนที่ยังไม่ได้แก้ไขเอง/ยังไม่ตรวจ (${editable.length} รายการ)`,
+    actions:[{label:'ยกเลิก',value:null},{label:'สุ่มใหม่',value:'redo'},{label:'เติมวันที่ว่าง',value:'fill',cls:'btn-primary'}]});
+  if(!ch) return;
+  if(ch==='redo'){ const ids=new Set(editable.map(a=>a.id)); db.audits=db.audits.filter(a=>!ids.has(a.id)); c.skipDays=c.skipDays.filter(d=>!d.startsWith(m)); ui.auSeed=(ui.auSeed||0)+1; }
+  const res=refreshPlans(m); touch(); renderAudit(); toast(`จัดแผนแล้ว ${res.added} วัน`,'ok');
+}
+
+/* ---------- Score linkage ---------- */
+function auJob(a){
+  if(a.jobId){ const j=db.jobs.find(x=>x.id===a.jobId); if(j) return j; }
+  const p=normName(a.project); if(!p) return null; const s=a.planStart||a.date, e=a.planEnd||a.date;
+  const taken=new Set(db.audits.filter(x=>x.id!==a.id&&x.jobId).map(x=>x.jobId));
+  const c=db.jobs.filter(j=>{ if(taken.has(j.id)) return false; const q=normName(j.info.site); if(!q) return false; const nameOk=q===p||(p.length>=3&&q.includes(p))||(q.length>=3&&p.includes(q)); const js=j.info.date, je=j.info.endDate||j.info.date; return nameOk && js<=e && je>=s; });
+  return c.sort((x,y)=>(y.sc?.auditType==='field')-(x.sc?.auditType==='field')||Math.abs(new Date(x.info.date)-new Date(a.date))-Math.abs(new Date(y.info.date)-new Date(a.date)))[0]||null;
+}
+function auScore(a){ const j=auJob(a); if(!j) return null; const k=jobCalc(j); return {job:j,k,net:k.sc.scored?k.sc.net:null,status:k.sc.status}; }
+function auScoreHTML(a,compact){
+  const r=auScore(a); if(!r) return compact?'':'<span class="muted small">ยังไม่มีผลตรวจ</span>';
+  if(r.net==null) return `<span class="badge b-wait" title="เชื่อมกับงาน PM แล้ว แต่ยังไม่ได้ให้คะแนน">รอคะแนน</span>`;
+  const cls=r.status==='PASS'?'b-pass':r.status==='FAIL'?'b-fail':'b-warn';
+  return `<span class="badge ${cls}" title="${esc(r.job.info.site)} · ${STATUS_TXT[r.status]}">${fmtPts(r.net)}${compact?'':' / 100'}${compact?'':' · '+STATUS_TXT[r.status]}</span>`;
+}
+function auEffStatus(a){ if(a.status==='planned' && auScore(a)?.net!=null) return 'done'; return a.status; }
+
+/* ---------- View ---------- */
+function renderAudit(){
+  const c=auCfg(); if(!ui.auMonth) ui.auMonth = curMonth()<c.fromMonth ? c.fromMonth : curMonth(); if(!ui.auView) ui.auView='grid';
+  const m=ui.auMonth; const [Y,M]=m.split('-').map(Number);
+  const list=db.audits.filter(a=>a.date.startsWith(m)).sort((a,b)=>a.date.localeCompare(b.date)||a.timeStart.localeCompare(b.timeStart));
+  const active=list.filter(a=>a.status!=='cancelled'); const done=active.filter(a=>auEffStatus(a)==='done');
+  const scores=active.map(a=>auScore(a)?.net).filter(v=>v!=null); const passN=active.filter(a=>auScore(a)?.status==='PASS').length;
+  const daysN=auditDaysOf(m).length; const sync=db.calSync||{};
+  const connected=!!calSessionEmail;
+  const tile=(l,v,col,sub)=>`<div class="card kpi"><div class="k-lbl">${l}</div><div class="k-val num" style="color:${col||'inherit'}">${v}</div><div class="k-sub">${sub||''}</div></div>`;
+  $('#v-audit').innerHTML=`
+  <div class="card" style="margin-bottom:16px"><div class="card-b row" style="gap:12px">
+    <span class="tc-ic" style="background:${connected?'var(--brand-l)':'#f3f1ea'};color:${connected?'var(--brand)':'#8a7558'}"><i class="fa-solid ${connected?'fa-cloud':'fa-cloud-arrow-down'}"></i></span>
+    <div style="flex:1;min-width:220px"><b>Smart O&amp;M Calendar</b> <a href="${CAL_DEFAULT.web}" target="_blank" rel="noopener" class="small">เปิดเว็บ <i class="fa-solid fa-arrow-up-right-from-square"></i></a><div class="small muted">${connected?`เชื่อมต่อแล้ว: ${esc(calSessionEmail)} · `:''}${sync.at?`ข้อมูลแผนล่าสุด ${new Date(sync.at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'})} · ${(sync.items||[]).filter(i=>i.src==='ppm').length} งาน PM&AN${String(sync.source).startsWith('file')?' (จากไฟล์)':''}`:'ยังไม่มีข้อมูลแผนงาน'}${connected&&c.autoSync?' · ซิงก์อัตโนมัติทุก 10 นาที':''}</div></div>
+    ${connected?`<button class="btn btn-sm" onclick="calSync(true)"><i class="fa-solid fa-rotate"></i> ซิงก์ตอนนี้</button><button class="btn btn-sm" onclick="calLogout()">ตัดการเชื่อมต่อ</button>`
+      :`<form class="row" style="gap:6px" onsubmit="event.preventDefault();calLogin()"><input class="inp sm" id="cal-email" type="email" autocomplete="username" value="${esc(c.lastEmail||'')}" placeholder="อีเมลที่ใช้ล็อกอินเว็บ Smart O&M" style="width:230px"><input class="inp sm" id="cal-pw" type="password" autocomplete="current-password" placeholder="รหัสผ่าน" style="width:140px"><button class="btn btn-sm btn-primary" type="submit"><i class="fa-solid fa-link"></i> เชื่อมต่อ</button></form>
+        <button class="btn btn-sm" onclick="$('#file-json').click()" title="นำเข้าไฟล์ maintenance_backup_*.json จากเมนู Backup ของเว็บ Smart O&M"><i class="fa-solid fa-file-import"></i> นำเข้าไฟล์ Export JSON</button>`}
+  </div>${connected?'':`<div class="card-b small muted" style="border-top:1px solid var(--line2);padding-top:10px"><i class="fa-solid fa-lock"></i> ใช้บัญชีเดียวกับเว็บ Smart O&amp;M · ระบบนี้อ่านข้อมูลแผนงานอย่างเดียว ไม่แก้ไขข้อมูลบนเว็บต้นทาง · ไม่เก็บรหัสผ่าน (เก็บเฉพาะ session การล็อกอินในเบราว์เซอร์นี้)</div>`}</div>
+
+  <div class="row" style="margin-bottom:14px;gap:8px">
+    <button class="au-mnav btn btn-sm btn-icon" onclick="auNav(-1)" title="เดือนก่อน"><i class="fa-solid fa-chevron-left"></i></button>
+    <h3 class="au-mnav" style="font-size:18px;min-width:170px;text-align:center">${MTH_FULL[M-1]} ${Y+543}</h3>
+    <button class="au-mnav btn btn-sm btn-icon" onclick="auNav(1)" title="เดือนถัดไป"><i class="fa-solid fa-chevron-right"></i></button>
+    <button class="au-mnav btn btn-sm" onclick="auNav(0)">เดือนนี้</button>
+    <div class="seg" style="margin-left:6px"><button class="${ui.auView==='grid'?'on':''}" onclick="ui.auView='grid';renderAudit()"><i class="fa-solid fa-calendar-days"></i> ปฏิทิน</button><button class="${ui.auView==='list'?'on':''}" onclick="ui.auView='list';renderAudit()"><i class="fa-solid fa-list"></i> ตารางแผน</button><button class="${ui.auView==='dash'?'on':''}" onclick="ui.auView='dash';renderAudit()"><i class="fa-solid fa-chart-column"></i> Dashboard</button></div>
+    <span class="spacer"></span>
+    <button class="au-mnav btn btn-sm" onclick="auGenerate()"><i class="fa-solid fa-wand-magic-sparkles"></i> สร้างแผนอัตโนมัติ</button>
+    <button class="btn btn-sm btn-primary" onclick="auEdit(null)"><i class="fa-solid fa-plus"></i> เพิ่มแผนตรวจ</button>
+    <button class="au-mnav btn btn-sm" onclick="auExportPDF()"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+    <button class="au-mnav btn btn-sm" onclick="auExportExcel()"><i class="fa-solid fa-file-excel"></i> Excel</button>
+  </div>
+  <div class="grid g-k5" id="au-month-kpi" style="margin-bottom:16px">
+    ${tile('แผนตรวจเดือนนี้',active.length,'',`วัน${c.days.map(d=>DOW_TH[d]).join('/')} ทั้งเดือน ${daysN} วัน`)}
+    ${tile('ตรวจแล้ว',done.length,'var(--ok)',active.length?`${n0(done.length/active.length*100)}% ของแผน`:'—')}
+    ${tile('รอเข้าตรวจ',active.filter(a=>auEffStatus(a)==='planned').length,'',`เลื่อน ${active.filter(a=>a.status==='postponed').length} · ยกเลิก ${list.length-active.length}`)}
+    ${tile('คะแนนเฉลี่ยที่ตรวจ',scores.length?n1(mean(scores)):'—','var(--brand)',scores.length?`จาก ${scores.length} โครงการ`:'ยังไม่มีคะแนน')}
+    ${tile('ผ่านเกณฑ์',scores.length?`${passN}/${scores.length}`:'—',passN<scores.length?'var(--bad)':'var(--ok)',`เกณฑ์ ≥ ${db.settings.passMark}`)}
+  </div>
+  <div id="au-body"></div>
+  <div class="card mt"><div class="card-h"><h3><i class="fa-solid fa-sliders" style="color:var(--navy)"></i> ตั้งค่าแผนตรวจ</h3></div><div class="card-b" id="au-cfg">
+    <div class="fgrid">
+      <div class="span2"><label class="lbl">วันที่เข้าตรวจ</label><div class="chips">${[1,2,3,4,5,6,0].map(d=>`<button type="button" class="chip ${c.days.includes(d)?'on':''}" data-audday="${d}">${DOW_FULL[d]}</button>`).join('')}</div></div>
+      <div><label class="lbl">เวลาเริ่ม (ค่าเริ่มต้น)</label><input class="inp" type="time" data-aucfg="timeStart" value="${c.timeStart}"></div>
+      <div><label class="lbl">เวลาสิ้นสุด (ค่าเริ่มต้น)</label><input class="inp" type="time" data-aucfg="timeEnd" value="${c.timeEnd}"></div>
+      <div class="span2"><label class="lbl">ผู้ตรวจ (Senior / Manager) – บรรทัดละ 1 คน</label><textarea class="inp" rows="3" data-aucfg="inspectors">${esc(c.inspectors.join('\n'))}</textarea></div>
+      <div><label class="lbl">เริ่มจัดแผนตั้งแต่เดือน</label><input class="inp" type="month" data-aucfg="fromMonth" value="${c.fromMonth}"></div>
+      <div><label class="lbl">ตัวเลือก</label><label class="checkrow" style="padding:6px 0"><input type="checkbox" data-aucfg="autoSync" ${c.autoSync?'checked':''}><span>ซิงก์และอัปเดตแผนอัตโนมัติ</span></label><label class="checkrow" style="padding:6px 0"><input type="checkbox" data-aucfg="includeCM" ${c.includeCM?'checked':''}><span>รวมงาน CM/งานทั่วไปในการสุ่ม</span></label></div>
+    </div>
+    <div class="mt"><label class="lbl">จับคู่ชื่อผู้ควบคุมงาน (ชื่อใน Smart O&amp;M → ชื่อในรายชื่อทีมงาน)</label>
+      <div id="au-map">${Object.entries(c.nameMap).map(([k,v])=>`<div class="row" style="gap:8px;margin-bottom:6px" data-mapk="${esc(k)}"><span class="badge b-wait" style="font-size:12.5px">${esc(k)}</span><i class="fa-solid fa-arrow-right muted"></i><select class="inp sm" style="width:220px" data-mapsel>${peopleList().map(p=>`<option ${p===v?'selected':''}>${esc(p)}</option>`).join('')}${peopleList().includes(v)?'':`<option selected>${esc(v)}</option>`}</select><button type="button" class="btn btn-sm btn-icon btn-danger" data-mapdel title="ลบการจับคู่"><i class="fa-solid fa-xmark"></i></button></div>`).join('')||'<div class="small muted">ยังไม่มี – เลือกชื่อจากรายชื่อทีมงานในหน้าแก้ไขแผนตรวจ แล้วติ๊ก “จำว่า…” ระบบจะเพิ่มให้ที่นี่</div>'}</div>
+      ${(()=>{ const srcNames=[...new Set((db.calSync?.items||[]).flatMap(i=>i.ops))].filter(n=>!c.nameMap[n]&&!peopleList().includes(n)); return srcNames.length&&peopleList().length?`<div class="row mt" style="gap:8px"><select class="inp sm" id="au-map-src" style="width:200px"><option value="">ชื่อจาก Smart O&amp;M…</option>${srcNames.map(n=>`<option>${esc(n)}</option>`).join('')}</select><i class="fa-solid fa-arrow-right muted"></i><select class="inp sm" id="au-map-dst" style="width:220px">${peopleList().map(p=>`<option>${esc(p)}</option>`).join('')}</select><button type="button" class="btn btn-sm" id="au-map-add"><i class="fa-solid fa-plus"></i> จับคู่</button></div>`:''; })()}</div>
+    <div class="small muted mt"><i class="fa-solid fa-circle-info"></i> แผนที่แก้ไขเอง หรือที่ตรวจแล้ว จะไม่ถูกซิงก์ทับ · แผนที่ยังไม่แก้ไขจะอัปเดตตามเว็บต้นทาง (วันเริ่ม–สิ้นสุด ผู้ควบคุมงาน) และถ้างานต้นทางถูกย้ายออกจากวันนั้น ระบบจะเลือกโครงการใหม่ให้</div>
+  </div></div>`;
+  if(ui.auView==='grid') auGrid(m,list); else if(ui.auView==='dash') auDash(); else auList(list);
+  $('#au-month-kpi').classList.toggle('hidden',ui.auView==='dash'); $$('.au-mnav').forEach(x=>x.classList.toggle('hidden',ui.auView==='dash'));
+  const cfgBox=$('#au-cfg');
+  cfgBox.oninput=cfgBox.onchange=e=>{ const t=e.target, k=t.dataset.aucfg; if(!k) return;
+    if(k==='inspectors') c.inspectors=t.value.split('\n').map(x=>x.trim()).filter(Boolean);
+    else if(k==='autoSync'||k==='includeCM') c[k]=t.checked;
+    else if(k==='fromMonth'){ if(/^\d{4}-\d{2}$/.test(t.value)) c.fromMonth=t.value; }
+    else c[k]=t.value; touch(); };
+  const reMap=()=>{ const byKey=new Map((db.calSync?.items||[]).map(i=>[i.key,i])); db.audits.forEach(x=>{ if(x.status==='planned'&&!x.edited&&x.srcKey){ const it=byKey.get(x.srcKey); if(it) x.supervisor=itemSup(it); } }); touch(); renderAudit(); };
+  cfgBox.addEventListener('change',e=>{ const t=e.target; if(t.dataset.mapsel!=null){ c.nameMap[t.closest('[data-mapk]').dataset.mapk]=t.value; reMap(); } });
+  const addBtn=$('#au-map-add'); if(addBtn) addBtn.onclick=()=>{ const k=$('#au-map-src').value; if(!k) return; c.nameMap[k]=$('#au-map-dst').value; reMap(); toast('จับคู่ชื่อแล้ว','ok'); };
+  cfgBox.onclick=e=>{ const md=e.target.closest('[data-mapdel]'); if(md){ delete c.nameMap[md.closest('[data-mapk]').dataset.mapk]; reMap(); return; } const b=e.target.closest('[data-audday]'); if(!b) return; const d=+b.dataset.audday; c.days=c.days.includes(d)?c.days.filter(x=>x!==d):[...c.days,d].sort(); touch(); renderAudit(); };
+}
+function auNav(n){ ui.auMonth = n===0 ? curMonth() : addMonths(ui.auMonth,n); renderAudit(); }
+function auCardHTML(a){
+  const st=auEffStatus(a); const [lbl,cls]=AU_STATUS[st]||AU_STATUS.planned;
+  return `<div class="au-card st-${st}${a.stale?' stale':''}" onclick="event.stopPropagation();auEdit('${a.id}')" title="คลิกเพื่อแก้ไข">
+    <div class="au-top"><span class="badge ${cls}">${st==='done'?'<i class="fa-solid fa-check"></i> ':''}${lbl}</span>${auScoreHTML(a,true)}</div>
+    <b class="au-p">${a.project?esc(a.project):a.unspecified?'<span style="color:#8a7558">ไม่ระบุงาน</span>':'<span class="muted">ยังไม่เลือกโครงการ</span>'}</b>${auDetail(a)?`<div class="au-d" title="${esc(auDetail(a))}">${esc(shortTxt(auDetail(a),34))}</div>`:''}
+    <div class="au-l"><i class="fa-solid fa-user-gear"></i> ${esc(a.supervisor)||'—'}</div>
+    <div class="au-l"><i class="fa-regular fa-clock"></i> ${esc(a.timeStart)}–${esc(a.timeEnd)}</div>${a.inspector?`<div class="au-l"><i class="fa-solid fa-user-shield"></i> ${esc(a.inspector)}</div>`:''}
+    ${a.planStart?`<div class="au-l muted"><i class="fa-regular fa-calendar"></i> แผน ${fmtDateShort(a.planStart)} – ${fmtDateShort(a.planEnd)}</div>`:''}
+    ${a.stale?'<div class="au-l" style="color:var(--bad)"><i class="fa-solid fa-triangle-exclamation"></i> แผนต้นทางเปลี่ยน</div>':''}
+  </div>`;
+}
+function auGrid(m,list){
+  const c=auCfg(); const [Y,M]=m.split('-').map(Number); const first=new Date(Y,M-1,1); const dim=new Date(Y,M,0).getDate(); const lead=first.getDay(); const cells=Math.ceil((lead+dim)/7)*7; const today=todayISO();
+  let h=`<div class="au-grid">${[0,1,2,3,4,5,6].map(d=>`<div class="au-dh ${c.days.includes(d)?'aud':''}">${DOW_FULL[d]}</div>`).join('')}`;
+  for(let i=0;i<cells;i++){
+    const dn=i-lead+1; if(dn<1||dn>dim){ h+='<div class="au-cell out"></div>'; continue; }
+    const iso=`${m}-${pad(dn)}`, dow=i%7, isAud=c.days.includes(dow), hol=auHoliday(iso); const aud=list.filter(a=>a.date===iso); const nRun=itemsOn(iso).length;
+    h+=`<div class="au-cell ${isAud?'aud':''} ${dow===0||dow===6?'wk':''} ${iso===today?'today':''}" ${isAud||aud.length?`onclick="auEdit(null,'${iso}')"`:''}>
+      <div class="au-dn"><span>${dn}</span>${hol?`<span class="au-hol">${esc(hol.name)}</span>`:''}${nRun?`<span class="au-run" title="งาน PM ที่อยู่ในแผนวันนี้ (Smart O&M)">PM ${nRun}</span>`:''}</div>
+      ${aud.map(auCardHTML).join('')}
+      ${isAud&&!aud.length?`<div class="au-empty"><i class="fa-solid fa-plus"></i> ${nRun?'เลือกโครงการ':'ไม่มีงาน PM ในแผน'}</div>`:''}
+    </div>`;
+  }
+  $('#au-body').innerHTML=h+'</div>';
+}
+function auList(list){
+  $('#au-body').innerHTML = list.length ? `<div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>วันที่ตรวจ</th><th>เวลา</th><th>โครงการ</th><th>ผู้ควบคุมงาน</th><th>Subcontractor / ทีม</th><th>แผนงาน เริ่ม – สิ้นสุด</th><th>ผู้ตรวจ</th><th>สถานะ</th><th>คะแนนตรวจ</th><th class="acts"></th></tr></thead><tbody>
+   ${list.map(a=>{ const st=auEffStatus(a); const [lbl,cls]=AU_STATUS[st]; return `<tr style="${a.status==='cancelled'?'opacity:.55':''}">
+    <td class="num"><b>${DOW_TH[dowOf(a.date)]} ${fmtDate(a.date)}</b></td><td class="num small">${esc(a.timeStart)}–${esc(a.timeEnd)}</td>
+    <td><b>${esc(auProjName(a))||'—'}</b>${auDetail(a)?`<div class="small muted" title="${esc(auDetail(a))}">${esc(shortTxt(auDetail(a),48))}</div>`:''}${a.stale?'<div class="small" style="color:var(--bad)">⚠ แผนต้นทางเปลี่ยน</div>':''}${a.edited?'<div class="small muted"><i class="fa-solid fa-lock"></i> แก้ไขเอง</div>':''}</td>
+    <td>${esc(a.supervisor)||'—'}</td><td class="small">${esc(a.team)||'—'}</td>
+    <td class="num small">${a.planStart?`${fmtDate(a.planStart)} – ${fmtDate(a.planEnd)}`:'—'}</td><td class="small">${esc(a.inspector)||'—'}</td>
+    <td><span class="badge ${cls}">${lbl}</span></td><td>${auScoreHTML(a)}</td>
+    <td class="acts">${st!=='done'&&a.status!=='cancelled'?`<button class="btn btn-sm" onclick="auMarkDone('${a.id}')" title="เช็คว่าเข้าตรวจแล้ว"><i class="fa-solid fa-check"></i></button>`:''}
+      <button class="btn btn-sm" onclick="auRecord('${a.id}')" title="บันทึกผลตรวจ / เปิดงาน PM"><i class="fa-solid fa-clipboard-check"></i></button>
+      <button class="btn btn-sm btn-icon" onclick="auEdit('${a.id}')" title="แก้ไข"><i class="fa-regular fa-pen-to-square"></i></button></td></tr>`; }).join('')}</tbody></table></div></div>`
+  : `<div class="card"><div class="empty"><i class="fa-regular fa-calendar"></i>ยังไม่มีแผนตรวจในเดือนนี้<br><button class="btn btn-primary mt" onclick="auGenerate()"><i class="fa-solid fa-wand-magic-sparkles"></i> สร้างแผนอัตโนมัติ</button></div></div>`;
+}
+
+/* ---------- Edit dialog ---------- */
+async function auEdit(id,iso){
+  const c=auCfg(); let a=id?db.audits.find(x=>x.id===id):null;
+  if(!a && iso){ const ex=db.audits.find(x=>x.date===iso); if(ex) a=ex; }
+  const isNew=!a; const d=a?clone(a):newAudit(iso||(ui.auMonth===curMonth()?todayISO():`${ui.auMonth}-01`));
+  const cands=itemsOn(d.date); const jobs=[...db.jobs].sort((x,y)=>y.info.date.localeCompare(x.info.date)).slice(0,200);
+  const byKey0=new Map((db.calSync?.items||[]).map(i=>[i.key,i])); const srcIt=byKey0.get(d.srcKey); const srcSup=srcIt?srcIt.ops.join(', '):''; const dirSize=peopleList().length;
+  const auto=auJob(d); const insp=[...new Set([...c.inspectors,db.settings.manager,...peopleList()].filter(Boolean))];
+  const body=`<div class="fgrid f2" id="au-form" style="margin-top:4px">
+    <div><label class="lbl">วันที่เข้าตรวจ</label><input class="inp" type="date" id="af-date" value="${d.date}"></div>
+    <div class="row" style="gap:6px;align-items:flex-end"><div style="flex:1"><label class="lbl">เวลา</label><input class="inp" type="time" id="af-ts" value="${d.timeStart}"></div><span style="padding-bottom:10px">–</span><div style="flex:1"><input class="inp" type="time" id="af-te" value="${d.timeEnd}"></div></div>
+    <div class="span4"><label class="lbl">เลือกจากแผน PM ของวันนั้น (Smart O&amp;M) <span class="muted" id="af-cn">${cands.length} งาน</span></label><select class="inp" id="af-pick"><option value="">— เลือกโครงการจากแผน หรือพิมพ์เองด้านล่าง —</option><option value="__none__" ${d.unspecified?'selected':''}>ไม่ระบุ (งานด่วน / ไม่ประสงค์ระบุชื่องาน)</option>${cands.map(it=>`<option value="${esc(it.key)}" ${it.key===d.srcKey?'selected':''}>${esc(it.project)} · ${esc(it.ops.join(', ')||'ไม่ระบุ Operator')} · ${fmtDateShort(it.start)}–${fmtDateShort(it.end)}</option>`).join('')}</select></div>
+    <div class="span4"><label class="lbl">โครงการ <span class="muted" style="font-weight:400" id="af-proj-hint">${d.unspecified?'(ไม่ระบุได้)':''}</span></label><input class="inp" id="af-project" value="${esc(d.project)}" list="af-dl-proj" placeholder="${d.unspecified?'ไม่ระบุงาน':'ชื่อโครงการ'}"></div>
+    <div class="span4"><label class="lbl">รายละเอียดงาน</label><textarea class="inp" id="af-detail" rows="2" placeholder="เช่น สุ่มตรวจการล้างแผงและขันทอร์ค Array B / ตรวจงานด่วนแก้ไข Inverter #2">${esc(d.detail||'')}</textarea><div class="small muted" style="margin-top:3px">แสดงแบบย่อใต้ชื่อโครงการในแผนงาน</div></div>
+    <div class="span4"><label class="lbl">ผู้ควบคุมงาน ${srcSup?`<span class="muted" style="font-weight:400">· ชื่อจาก Smart O&amp;M: <b>${esc(srcSup)}</b></span>`:''}</label>
+      <div class="row" style="gap:8px;flex-wrap:nowrap"><input class="inp" id="af-sup" value="${esc(d.supervisor)}" list="af-dl-people" style="flex:1">
+      <select class="inp" id="af-suppick" style="width:220px"><option value="">เลือกจากรายชื่อทีมงาน…</option>${db.settings.teams.filter(t=>t.members.length).map(t=>`<optgroup label="${esc(t.name)}">${t.members.map(m=>`<option ${m===d.supervisor?'selected':''}>${esc(m)}</option>`).join('')}</optgroup>`).join('')}${db.settings.unassigned.length?`<optgroup label="ยังไม่สังกัดทีม">${db.settings.unassigned.map(m=>`<option>${esc(m)}</option>`).join('')}</optgroup>`:''}</select></div>
+      <label class="checkrow hidden" id="af-mapbox" style="padding:6px 0 0"><input type="checkbox" id="af-map" checked><span id="af-maptxt"></span></label>
+      ${dirSize?'':'<div class="small muted" style="margin-top:4px">ยังไม่มีรายชื่อทีมงาน – เพิ่มได้ที่ ตั้งค่า → ทีมและรายชื่อทีมงาน</div>'}</div>
+    <div><label class="lbl">Subcontractor / ทีม</label><input class="inp" id="af-team" value="${esc(d.team)}"></div>
+    <div><label class="lbl">แผนงานเริ่ม</label><input class="inp" type="date" id="af-ps" value="${d.planStart}"></div>
+    <div><label class="lbl">แผนงานสิ้นสุด</label><input class="inp" type="date" id="af-pe" value="${d.planEnd}"></div>
+    <div><label class="lbl">ผู้ตรวจ (Senior / Manager)</label><input class="inp" id="af-insp" value="${esc(d.inspector)}" list="af-dl-insp"></div>
+    <div><label class="lbl">สถานะ</label><select class="inp" id="af-st">${Object.entries(AU_STATUS).map(([k,v])=>`<option value="${k}" ${d.status===k?'selected':''}>${v[0]}</option>`).join('')}</select></div>
+    <div class="span4"><label class="lbl">เชื่อมคะแนนจากงาน PM ${auto&&!d.jobId?`<span class="muted">(จับคู่อัตโนมัติ: ${esc(auto.info.site)} ${fmtDate(auto.info.date)})</span>`:''}</label><select class="inp" id="af-job"><option value="">อัตโนมัติ – จับคู่จากชื่อโครงการและช่วงวันที่</option>${jobs.map(j=>{ const k=jobCalc(j); return `<option value="${j.id}" ${d.jobId===j.id?'selected':''}>${fmtDate(j.info.date)} · ${esc(j.info.site)} · ${k.sc.scored?fmtPts(k.sc.net):'ยังไม่มีคะแนน'}</option>`; }).join('')}</select></div>
+    <div class="span4"><label class="lbl">หมายเหตุ</label><input class="inp" id="af-note" value="${esc(d.note)}"></div>
+    <datalist id="af-dl-proj">${[...new Set((db.calSync?.items||[]).map(i=>i.project).concat(db.jobs.map(j=>j.info.site)))].filter(Boolean).map(p=>`<option value="${esc(p)}">`).join('')}</datalist>
+    <datalist id="af-dl-people">${[...new Set(peopleList().concat((db.calSync?.items||[]).flatMap(i=>i.ops).map(mapName)))].map(p=>`<option value="${esc(p)}">`).join('')}</datalist>
+    <datalist id="af-dl-insp">${insp.map(p=>`<option value="${esc(p)}">`).join('')}</datalist>
+  </div>`;
+  const pr=dialog({title:isNew?'เพิ่มแผนสุ่มตรวจ':`แก้ไขแผนตรวจ – ${DOW_FULL[dowOf(d.date)]} ${fmtDate(d.date)}`,body,
+    actions:[...(isNew?[]:[{label:'<i class="fa-regular fa-trash-can"></i> ลบ',value:'del',cls:'btn-danger'},{label:'<i class="fa-solid fa-clipboard-check"></i> บันทึกผลตรวจ',value:'rec'}]),{label:'ยกเลิก',value:null},{label:'บันทึก',value:'save',cls:'btn-primary'}]});
+  $('.modal-card').style.maxWidth='640px';
+  const byKey=new Map((db.calSync?.items||[]).map(i=>[i.key,i]));
+  $('#af-pick').onchange=e=>{ setTimeout(updMap,0); const none=e.target.value==='__none__'; $('#af-proj-hint').textContent=none?'(ไม่ระบุได้)':''; $('#af-project').placeholder=none?'ไม่ระบุงาน':'ชื่อโครงการ'; if(none){ $('#af-project').value=''; return; } const it=byKey.get(e.target.value); if(!it) return; $('#af-project').value=it.project; $('#af-sup').value=itemSup(it); $('#af-team').value=it.team; $('#af-ps').value=it.start; $('#af-pe').value=it.end; };
+  const updMap=()=>{ const it=byKey.get($('#af-pick').value)||srcIt; const raw=it&&it.ops.length===1?it.ops[0]:''; const v=$('#af-sup').value.trim(); const box=$('#af-mapbox');
+    const show=raw && v && v!==raw && peopleList().includes(v) && (auCfg().nameMap[raw]!==v); box.classList.toggle('hidden',!show); if(show) $('#af-maptxt').innerHTML=`จำว่า “${esc(raw)}” ใน Smart O&amp;M คือ <b>${esc(v)}</b> (ใช้กับทุกแผนและการซิงก์ครั้งต่อไป)`; };
+  $('#af-suppick').onchange=e=>{ if(e.target.value){ $('#af-sup').value=e.target.value; updMap(); } };
+  $('#af-sup').oninput=updMap; updMap();
+  $('#af-date').onchange=e=>{ const cs=itemsOn(e.target.value); $('#af-cn').textContent=`${cs.length} งาน`; $('#af-pick').innerHTML='<option value="">— เลือกโครงการจากแผน หรือพิมพ์เองด้านล่าง —</option><option value="__none__">ไม่ระบุ (งานด่วน / ไม่ประสงค์ระบุชื่องาน)</option>'+cs.map(it=>`<option value="${esc(it.key)}">${esc(it.project)} · ${esc(it.ops.join(', ')||'ไม่ระบุ Operator')} · ${fmtDateShort(it.start)}–${fmtDateShort(it.end)}</option>`).join(''); };
+  const act=await pr; $('.modal-card').style.maxWidth='';
+  if(!act) return;
+  if(act==='del'){ if(!(await confirmBox('ลบแผนตรวจ',`ลบแผนวันที่ ${fmtDate(d.date)} (${esc(d.project)})?<br><span class="small muted">วันนี้จะไม่ถูกจัดแผนอัตโนมัติอีก (ถ้าต้องการให้กลับมา ใช้ “สร้างแผนอัตโนมัติ → สุ่มใหม่”)</span>`,'ลบ',true))) return;
+    db.audits=db.audits.filter(x=>x.id!==d.id); if(!c.skipDays.includes(d.date)) c.skipDays.push(d.date); touch(); renderAudit(); return; }
+  const v0=id=>$(id).value;
+  const mapOn=!$('#af-mapbox').classList.contains('hidden') && $('#af-map').checked; const mapIt=byKey.get(v0('#af-pick'))||srcIt;
+  const v=id=>$(id).value; const pickRaw=v('#af-pick'); const none=pickRaw==='__none__'; const pick=none?'':pickRaw;
+  const upd={date:v('#af-date')||d.date,timeStart:v('#af-ts'),timeEnd:v('#af-te'),project:v('#af-project').trim(),supervisor:v('#af-sup').trim(),team:v('#af-team').trim(),planStart:v('#af-ps'),planEnd:v('#af-pe'),inspector:v('#af-insp').trim(),status:v('#af-st'),jobId:v('#af-job')||null,note:v('#af-note').trim(),detail:v('#af-detail').trim(),unspecified:none};
+  if(!upd.project && !none){ toast('กรุณาระบุโครงการ หรือเลือก “ไม่ระบุ”','error'); return; }
+  if(upd.planStart&&upd.planEnd&&upd.planEnd<upd.planStart){ toast('แผนงานสิ้นสุดต้องไม่ก่อนวันเริ่ม','error'); return; }
+  const changed=['date','project','supervisor','team','planStart','planEnd'].some(k=>upd[k]!==d[k]);
+  if(mapOn && mapIt && mapIt.ops.length===1){ const raw=mapIt.ops[0]; auCfg().nameMap[raw]=upd.supervisor;
+    let n=0; db.audits.forEach(x=>{ if(x.id!==d.id && x.status==='planned' && !x.edited && x.srcKey){ const it2=byKey.get(x.srcKey); if(it2){ const ns=itemSup(it2); if(ns!==x.supervisor){ x.supervisor=ns; n++; } } } });
+    toast(`จับคู่ชื่อ “${raw}” → ${upd.supervisor}${n?` · อัปเดตแผนอื่นอีก ${n} รายการ`:''}`,'ok'); }
+  const expectSup = pick && byKey.get(pick) ? itemSup(byKey.get(pick)) : (srcIt?itemSup(srcIt):null);
+  Object.assign(d,upd); if(pick) d.srcKey=pick; if(none){ d.srcKey=''; d.edited=true; } const srcNow=byKey.get(d.srcKey); if(changed && !(srcNow && srcNow.project===d.project && itemSup(srcNow)===d.supervisor && srcNow.start===d.planStart && srcNow.end===d.planEnd && srcNow.team===d.team)) d.edited=true; d.stale=false;
+  if(d.status==='done'&&!d.doneAt) d.doneAt=new Date().toISOString();
+  if(isNew) db.audits.push(d); else db.audits[db.audits.findIndex(x=>x.id===d.id)]=d;
+  touch(); renderAudit(); toast('บันทึกแผนตรวจแล้ว','ok');
+  if(act==='rec') auRecord(d.id);
+}
+function auMarkDone(id){ const a=db.audits.find(x=>x.id===id); if(!a) return; a.status='done'; a.doneAt=new Date().toISOString(); touch(); renderAudit(); toast(`เช็คตรวจแล้ว: ${a.project}`,'ok'); }
+async function auRecord(id){
+  const a=db.audits.find(x=>x.id===id); if(!a) return;
+  const j=auJob(a);
+  if(j){ if(!a.jobId){ a.jobId=j.id; touch(); } await editJob(j.id); if(job&&job.id===j.id){ ui.step=4; renderPM(); } return; }
+  if(dirty && !(await confirmBox('เริ่มบันทึกผลตรวจ','งานในหน้าบันทึก PM ยังไม่ได้บันทึก ต้องการทิ้งการแก้ไขนั้นหรือไม่?','ทิ้งและเริ่มใหม่',true))) return;
+  job=newJobObj(); const tm=findTeam(a.team);
+  Object.assign(job.info,{site:a.project,date:a.planStart||a.date,endDate:a.planEnd||a.planStart||a.date,supervisor:a.supervisor,team:tm?tm.name:''});
+  const known=new Set(peopleList()); job.info.members=String(a.supervisor||'').split(/\s*,\s*/).filter(n=>n&&known.has(n));
+  Object.assign(job.sc,{auditType:'field',evaluator:a.inspector||db.settings.manager,evalDate:a.date});
+  job._auditId=a.id; dirty=true; ui.step=1; go('pm');
+  toast('สร้างใบงาน PM จากแผนตรวจแล้ว – กรอก Checklist / Scorecard แล้วกดบันทึก คะแนนจะเชื่อมกับแผนตรวจอัตโนมัติ','ok');
+}
+function auLinkOnSave(saved){
+  if(!saved._auditId) return; const a=db.audits.find(x=>x.id===saved._auditId); if(!a) return;
+  a.jobId=saved.id; if(a.status==='planned'){ a.status='done'; a.doneAt=new Date().toISOString(); }
+}
+
+/* ---------- Export ---------- */
+async function auExportPDF(){
+  if(!needLib('pdf')) return; const m=ui.auMonth; const [Y,M]=m.split('-').map(Number); const s=db.settings; const c=auCfg();
+  const list=db.audits.filter(a=>a.date.startsWith(m)).sort((a,b)=>a.date.localeCompare(b.date)||a.timeStart.localeCompare(b.timeStart));
+  if(!list.length){ toast('ยังไม่มีแผนตรวจในเดือนนี้','warn'); return; }
+  const sg=await signerDialog({title:'Export แผนสุ่มตรวจ (PDF)',key:'audit'}); if(!sg) return;
+  loading(true,'กำลังสร้าง PDF แผนสุ่มตรวจ…');
+  try{
+    const active=list.filter(a=>a.status!=='cancelled'), done=active.filter(a=>auEffStatus(a)==='done'), sc=active.map(a=>auScore(a)?.net).filter(v=>v!=null);
+    const html=`${rptHeader('แผนสุ่มตรวจคุณภาพงานหน้างาน','Field Quality Audit Plan – Senior / Manager',`เดือน: <b>${MTH_FULL[M-1]} ${Y+543}</b><br>วันเข้าตรวจ: <b>${c.days.map(d=>DOW_FULL[d]).join(', ')}</b><br>จัดทำโดย: ${esc(sg.rows[0].name||s.manager)}`)}
+     <div class="band"><span>แผนตรวจ ${active.length} โครงการ · ตรวจแล้ว ${done.length}</span><span>คะแนนเฉลี่ย ${sc.length?n1(mean(sc)):'—'} · ผ่านเกณฑ์ ≥ ${s.passMark}: ${active.filter(a=>auScore(a)?.status==='PASS').length}/${sc.length}</span></div>
+     <table><thead><tr><th>วันที่ตรวจ</th><th>เวลา</th><th>โครงการ</th><th>ผู้ควบคุมงาน</th><th>Subcontractor/ทีม</th><th>แผนงาน เริ่ม – สิ้นสุด</th><th>ผู้ตรวจ</th><th>สถานะ</th><th class="r">คะแนน</th><th>ผลตรวจ</th></tr></thead><tbody>
+     ${list.map(a=>{ const r=auScore(a); const st=auEffStatus(a); return `<tr><td><b>${DOW_FULL[dowOf(a.date)]}</b><br>${fmtDate(a.date)}</td><td>${esc(a.timeStart)}–${esc(a.timeEnd)}</td><td><b>${esc(auProjName(a))}</b>${auDetail(a)?`<br><span style="color:#667085">${esc(shortTxt(auDetail(a),70))}</span>`:''}</td><td>${esc(a.supervisor)||'—'}</td><td>${esc(a.team)||'—'}</td><td>${a.planStart?fmtDate(a.planStart)+' – '+fmtDate(a.planEnd):'—'}</td><td>${esc(a.inspector)||'—'}</td><td class="${st==='done'?'pass':st==='cancelled'?'':'wait'}">${AU_STATUS[st][0]}</td><td class="r"><b>${r&&r.net!=null?fmtPts(r.net):'—'}</b></td><td class="${r?.status==='PASS'?'pass':r?.status==='FAIL'?'fail':''}">${r&&r.net!=null?STATUS_TXT[r.status]:''}</td></tr>`; }).join('')}</tbody></table>
+     <div class="note">แหล่งข้อมูลแผนงาน: Smart O&amp;M Calendar${db.calSync?.at?` (ซิงก์ล่าสุด ${new Date(db.calSync.at).toLocaleString('th-TH')})`:''} · คะแนนเชื่อมจาก PM Quality Scorecard ของแต่ละโครงการ</div>
+     ${signHTML(sg.rows)}`;
+    await renderPDF(html,`Audit_Plan_${m}.pdf`,'landscape'); toast('ดาวน์โหลด PDF แผนตรวจแล้ว','ok');
+  }catch(e){ console.error(e); toast('สร้าง PDF ไม่สำเร็จ: '+e.message,'error'); } finally{ loading(false); }
+}
+function auRows(list){ return list.map(a=>{ const r=auScore(a); const st=auEffStatus(a); return {'วันที่ตรวจ':a.date,'วัน':DOW_FULL[dowOf(a.date)],'เวลาเริ่ม':a.timeStart,'เวลาสิ้นสุด':a.timeEnd,'โครงการ':auProjName(a),'รายละเอียดงาน':a.detail||'','งาน (Smart O&M)':a.activity,'ผู้ควบคุมงาน':a.supervisor,'Subcontractor/ทีม':a.team,'แผนงานเริ่ม':a.planStart,'แผนงานสิ้นสุด':a.planEnd,'ผู้ตรวจ':a.inspector,'สถานะ':AU_STATUS[st][0],'คะแนน':r&&r.net!=null?r.net:'','ผลตรวจ':r&&r.net!=null?STATUS_TXT[r.status]:'','Work Order':a.wo,'หมายเหตุ':a.note}; }); }
+async function auExportExcel(){ if(!needLib('xlsx')) return; const m=ui.auMonth; const list=db.audits.filter(a=>a.date.startsWith(m)).sort((a,b)=>a.date.localeCompare(b.date));
+  const sg=await signerDialog({title:'Export แผนสุ่มตรวจ (Excel)',key:'audit'}); if(!sg) return;
+  const wb=XLSX.utils.book_new(); const ws=sheetJSON(auRows(list),[11,10,8,8,26,30,24,22,18,11,11,16,11,7,10,16,20]); XLSX.utils.sheet_add_aoa(ws,signAOA(sg.rows),{origin:-1}); XLSX.utils.book_append_sheet(wb,ws,'Audit Plan '+m); XLSX.writeFile(wb,`Audit_Plan_${m}.xlsx`); toast('ส่งออก Excel แล้ว','ok'); }
+function isOMBackup(o){ return o && typeof o==='object' && !o.jobs && (Array.isArray(o.planpm) || (o.version && Array.isArray(o.records) && o.options)); }
+
+/* ---------- Audit dashboard ---------- */
+function auResult(a){ const r=auScore(a); if(!r||r.net==null) return {k:'none',net:null}; return {k:r.status==='PASS'?'pass':r.status==='FAIL'?'fail':'wait',net:r.net,job:r.job}; }
+function auDashRange(){ const c=auCfg(); const ms=db.audits.map(a=>a.date.slice(0,7)).sort(); const lastA=ms[ms.length-1]||curMonth();
+  if(!ui.auDash) ui.auDash={from:c.fromMonth||AU_FROM,to:lastA>curMonth()?curMonth():(lastA<(c.fromMonth||AU_FROM)?(c.fromMonth||AU_FROM):curMonth())};
+  if(ui.auDash.to<ui.auDash.from) ui.auDash.to=ui.auDash.from; return ui.auDash; }
+function auDashData(from,to){
+  const audits=db.audits.filter(a=>a.status!=='cancelled'&&a.date.slice(0,7)>=from&&a.date.slice(0,7)<=to);
+  const months=monthRange(from,to).map(m=>{ const L=audits.filter(a=>a.date.startsWith(m)); const D=L.filter(a=>auEffStatus(a)==='done').map(auResult); const sc=D.filter(r=>r.net!=null).map(r=>r.net);
+    return {m,plan:L.length,done:D.length,avg:mean(sc),pass:D.filter(r=>r.k==='pass').length,fail:D.filter(r=>r.k==='fail').length,wait:D.filter(r=>r.k==='wait'||r.k==='none').length}; });
+  const done=audits.filter(a=>auEffStatus(a)==='done').map(a=>({a,r:auResult(a)})).sort((x,y)=>x.a.date.localeCompare(y.a.date));
+  const proj={}, sup={};
+  done.forEach(({a,r})=>{ const pk=normName(auProjName(a))||'_'; const P=proj[pk]||(proj[pk]={name:auProjName(a)||'—',sups:new Set(),n:0,sc:[],pass:0,fail:0,last:null});
+    P.n++; if(r.net!=null) P.sc.push(r.net); if(r.k==='pass') P.pass++; if(r.k==='fail') P.fail++; String(a.supervisor||'').split(/\s*,\s*/).filter(Boolean).forEach(x=>P.sups.add(x)); P.last={a,r};
+    const names=String(a.supervisor||'').split(/\s*,\s*/).filter(Boolean); (names.length?names:['ไม่ระบุ']).forEach(nm=>{ const S=sup[nm]||(sup[nm]={name:nm,projs:new Set(),n:0,sc:[],pass:0,fail:0}); S.n++; S.projs.add(auProjName(a)||'—'); if(r.net!=null) S.sc.push(r.net); if(r.k==='pass') S.pass++; if(r.k==='fail') S.fail++; }); });
+  const fin=o=>Object.values(o).map(x=>({...x,avg:mean(x.sc)})).sort((x,y)=>(y.avg??-1)-(x.avg??-1)||y.n-x.n);
+  const sc=done.map(d=>d.r.net).filter(v=>v!=null);
+  return {from,to,months,done,plan:audits.length,proj:fin(proj),sup:fin(sup),avg:mean(sc),pass:done.filter(d=>d.r.k==='pass').length,fail:done.filter(d=>d.r.k==='fail').length,wait:done.filter(d=>d.r.k==='wait'||d.r.k==='none').length};
+}
+function auResBadge(r){ if(!r||r.net==null) return '<span class="badge b-wait">รอผล</span>'; return `<span class="badge ${r.k==='pass'?'b-pass':r.k==='fail'?'b-fail':'b-warn'}">${fmtPts(r.net)} · ${r.k==='pass'?'ผ่าน':r.k==='fail'?'ไม่ผ่าน':'รอ Report'}</span>`; }
+function cfgAuDash(D){ const c=colors(); const pm=db.settings.passMark;
+  return {type:'bar',data:{labels:D.months.map(x=>fmtMonth(x.m)),datasets:[
+    {type:'line',label:'คะแนนเฉลี่ย',data:D.months.map(x=>x.avg==null?null:Math.round(x.avg*10)/10),borderColor:c.navy,backgroundColor:c.navy,yAxisID:'y',pointRadius:4,borderWidth:2.5,spanGaps:true,order:0},
+    {label:'ผ่านเกณฑ์',data:D.months.map(x=>x.pass),backgroundColor:c.brand,yAxisID:'y1',stack:'s',borderRadius:4,order:1},
+    {label:'ไม่ผ่านเกณฑ์',data:D.months.map(x=>x.fail),backgroundColor:c.bad,yAxisID:'y1',stack:'s',borderRadius:4,order:1},
+    {label:'รอผล',data:D.months.map(x=>x.wait),backgroundColor:c.grey,yAxisID:'y1',stack:'s',borderRadius:4,order:1}]},
+    options:baseOpts({scales:{y:{position:'left',min:0,max:100,grid:{color:'#eef1f6'},title:{display:true,text:'คะแนนเฉลี่ย',font:{size:10.5}}},y1:{position:'right',stacked:true,beginAtZero:true,ticks:{precision:0},grid:{display:false},title:{display:true,text:'จำนวนงานที่ตรวจ',font:{size:10.5}}},x:{stacked:true,grid:{display:false}}},plugins:{...baseOpts().plugins,refLine:{value:pm}}})};
+}
+function auDash(){
+  const R=auDashRange(); const D=auDashData(R.from,R.to); const pm=db.settings.passMark;
+  const monthsOpt=monthRange(addMonths(auCfg().fromMonth||AU_FROM,-12),addMonths(curMonth(),12));
+  const tile=(l,v,col,sub)=>`<div class="card kpi"><div class="k-lbl">${l}</div><div class="k-val num" style="color:${col||'inherit'}">${v}</div><div class="k-sub">${sub||''}</div></div>`;
+  const fails=D.done.filter(d=>d.r.k==='fail');
+  $('#au-body').innerHTML=`
+   <div class="filters"><span class="small muted">ช่วงเดือน</span>
+     <select class="inp" id="aud-from" style="min-width:130px">${monthsOpt.map(m=>`<option value="${m}" ${m===R.from?'selected':''}>${fmtMonth(m)}</option>`).join('')}</select><span>–</span>
+     <select class="inp" id="aud-to" style="min-width:130px">${monthsOpt.map(m=>`<option value="${m}" ${m===R.to?'selected':''}>${fmtMonth(m)}</option>`).join('')}</select>
+     <span class="spacer"></span><button class="btn btn-sm" onclick="auExportDashPDF()"><i class="fa-solid fa-file-pdf"></i> PDF Dashboard</button></div>
+   <div class="grid g-k5">
+     ${tile('เข้าตรวจแล้ว',D.done.length,'',`จากแผน ${D.plan} งาน`)}
+     ${tile('คะแนนเฉลี่ย',D.avg!=null?n1(D.avg):'—','var(--brand)','จากงานที่มีคะแนน')}
+     ${tile('ผ่านเกณฑ์',D.pass,'var(--ok)',`เกณฑ์ ≥ ${pm}`)}
+     ${tile('ไม่ผ่านเกณฑ์',D.fail,D.fail?'var(--bad)':'',D.pass+D.fail?`ผ่าน ${n0(D.pass/(D.pass+D.fail)*100)}%`:'—')}
+     ${tile('รอผลคะแนน',D.wait,'','ตรวจแล้ว ยังไม่ได้ให้คะแนนครบ')}
+   </div>
+   <div class="grid g-21 mt">
+     <div class="card"><div class="card-h"><h3>ผลการเข้าตรวจรายเดือน</h3><span class="sub">จำนวนงาน (แท่ง) · คะแนนเฉลี่ย (เส้น)</span></div><div class="card-b"><div class="chart-box"><canvas id="ch-audit"></canvas></div></div></div>
+     <div class="card"><div class="card-h"><h3>สรุปรายเดือน</h3></div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>เดือน</th><th class="c">แผน</th><th class="c">ตรวจ</th><th class="r">เฉลี่ย</th><th class="c">ผ่าน</th><th class="c">ไม่ผ่าน</th></tr></thead><tbody>
+       ${D.months.map(x=>`<tr><td><b>${fmtMonth(x.m)}</b></td><td class="c num">${x.plan}</td><td class="c num">${x.done}</td><td class="r num"><b style="color:${x.avg==null?'inherit':x.avg>=pm?'var(--ok)':'var(--bad)'}">${n1(x.avg)}</b></td><td class="c num" style="color:var(--ok)">${x.pass||'<span class="muted">0</span>'}</td><td class="c num" style="color:var(--bad)">${x.fail||'<span class="muted">0</span>'}</td></tr>`).join('')}</tbody></table></div></div>
+   </div>
+   <div class="grid g-2 mt">
+     <div class="card"><div class="card-h"><h3>ผลตรวจรายโครงการ</h3></div><div class="tbl-wrap">${D.proj.length?`<table class="tbl"><thead><tr><th>โครงการ</th><th>ผู้ควบคุมงาน</th><th class="c">ตรวจ</th><th class="r">เฉลี่ย</th><th class="c">ผ่าน/ไม่ผ่าน</th><th>ล่าสุด</th></tr></thead><tbody>
+       ${D.proj.map(p=>`<tr><td><b>${esc(p.name)}</b></td><td class="small">${esc([...p.sups].join(', '))||'—'}</td><td class="c num">${p.n}</td><td class="r num"><b style="color:${p.avg==null?'inherit':p.avg>=pm?'var(--ok)':'var(--bad)'}">${n1(p.avg)}</b></td><td class="c num"><span style="color:var(--ok)">${p.pass}</span> / <span style="color:var(--bad)">${p.fail}</span></td><td class="small">${fmtDate(p.last.a.date)}<br>${auResBadge(p.last.r)}</td></tr>`).join('')}</tbody></table>`:'<div class="empty"><i class="fa-regular fa-folder-open"></i>ยังไม่มีงานที่เข้าตรวจในช่วงนี้</div>'}</div></div>
+     <div class="card"><div class="card-h"><h3>ผลตรวจรายผู้ควบคุมงาน</h3></div><div class="tbl-wrap">${D.sup.length?`<table class="tbl"><thead><tr><th>ผู้ควบคุมงาน</th><th>โครงการที่ถูกตรวจ</th><th class="c">ตรวจ</th><th class="r">เฉลี่ย</th><th class="c">ผ่าน</th><th class="c">ไม่ผ่าน</th></tr></thead><tbody>
+       ${D.sup.map(p=>`<tr><td><b>${esc(p.name)}</b></td><td class="small">${esc(shortTxt([...p.projs].join(', '),60))}</td><td class="c num">${p.n}</td><td class="r num"><b style="color:${p.avg==null?'inherit':p.avg>=pm?'var(--ok)':'var(--bad)'}">${n1(p.avg)}</b></td><td class="c num" style="color:var(--ok)">${p.pass}</td><td class="c num" style="color:${p.fail?'var(--bad)':'inherit'}">${p.fail}</td></tr>`).join('')}</tbody></table>`:'<div class="empty"><i class="fa-solid fa-user-gear"></i>ยังไม่มีข้อมูล</div>'}</div></div>
+   </div>
+   <div class="card mt"><div class="card-h"><h3 style="color:var(--bad)"><i class="fa-solid fa-circle-xmark"></i> งานที่ไม่ผ่านเกณฑ์</h3><span class="sub">${fails.length} งาน</span></div><div class="tbl-wrap">${fails.length?`<table class="tbl"><thead><tr><th>วันที่ตรวจ</th><th>โครงการ</th><th>รายละเอียดงาน</th><th>ผู้ควบคุมงาน</th><th>ผู้ตรวจ</th><th>ผลตรวจ</th><th class="acts"></th></tr></thead><tbody>
+       ${fails.map(({a,r})=>`<tr><td class="num">${DOW_TH[dowOf(a.date)]} ${fmtDate(a.date)}</td><td><b>${esc(auProjName(a))}</b></td><td class="small">${esc(shortTxt(auDetail(a),50))||'—'}</td><td>${esc(a.supervisor)||'—'}</td><td class="small">${esc(a.inspector)||'—'}</td><td>${auResBadge(r)}</td><td class="acts">${r.job?`<button class="btn btn-sm btn-icon" title="เปิดงาน PM" onclick="editJob('${r.job.id}')"><i class="fa-regular fa-pen-to-square"></i></button>`:''}</td></tr>`).join('')}</tbody></table>`:'<div class="empty"><i class="fa-regular fa-circle-check"></i>ไม่มีงานที่ไม่ผ่านเกณฑ์ในช่วงนี้</div>'}</div></div>`;
+  mkChart('ch-audit',cfgAuDash(D));
+  $('#aud-from').onchange=e=>{ ui.auDash.from=e.target.value; auDash(); }; $('#aud-to').onchange=e=>{ ui.auDash.to=e.target.value; auDash(); };
+}
+async function auExportDashPDF(){
+  if(!needLib('pdf')) return; const R=auDashRange(); const D=auDashData(R.from,R.to); const pm=db.settings.passMark;
+  const sg=await signerDialog({title:'Export Dashboard ผลการสุ่มตรวจ (PDF)',key:'audit'}); if(!sg) return;
+  loading(true,'กำลังสร้าง PDF Dashboard…');
+  try{
+    const img=chartImage(cfgAuDash(D),718,240);
+    const kp=(l,v,sub)=>`<div><span>${l}</span><b>${v}</b><small>${sub||''}</small></div>`;
+    const html=`${rptHeader('สรุปผลการสุ่มตรวจหน้างาน','Field Quality Audit Dashboard',`ช่วง: <b>${fmtMonth(R.from)} – ${fmtMonth(R.to)}</b><br>เกณฑ์ผ่าน ≥ ${pm}`)}
+     <h2>1. ภาพรวม</h2><div class="kp">${kp('เข้าตรวจแล้ว',D.done.length+' งาน','จากแผน '+D.plan)}${kp('คะแนนเฉลี่ย',D.avg!=null?n1(D.avg):'—','')}${kp('ผ่าน / ไม่ผ่าน',`${D.pass} / ${D.fail}`,D.pass+D.fail?`ผ่าน ${n0(D.pass/(D.pass+D.fail)*100)}%`:'')}</div>
+     <h2>2. ผลการเข้าตรวจรายเดือน</h2><img class="ch" src="${img}">
+     <table style="margin-top:6px"><thead><tr><th>เดือน</th><th class="c">แผน</th><th class="c">ตรวจแล้ว</th><th class="r">คะแนนเฉลี่ย</th><th class="c">ผ่าน</th><th class="c">ไม่ผ่าน</th><th class="c">รอผล</th></tr></thead><tbody>${D.months.map(x=>`<tr><td>${fmtMonth(x.m)}</td><td class="c">${x.plan}</td><td class="c">${x.done}</td><td class="r ${x.avg==null?'':x.avg>=pm?'pass':'fail'}">${n1(x.avg)}</td><td class="c">${x.pass}</td><td class="c">${x.fail}</td><td class="c">${x.wait}</td></tr>`).join('')}</tbody></table>
+     <h2>3. ผลตรวจรายโครงการ</h2><table><thead><tr><th>โครงการ</th><th>ผู้ควบคุมงาน</th><th class="c">ตรวจ</th><th class="r">เฉลี่ย</th><th class="c">ผ่าน</th><th class="c">ไม่ผ่าน</th><th>ตรวจล่าสุด</th></tr></thead><tbody>${D.proj.map(p=>`<tr><td><b>${esc(p.name)}</b></td><td>${esc([...p.sups].join(', '))}</td><td class="c">${p.n}</td><td class="r ${p.avg==null?'':p.avg>=pm?'pass':'fail'}">${n1(p.avg)}</td><td class="c">${p.pass}</td><td class="c">${p.fail}</td><td>${fmtDate(p.last.a.date)}${p.last.r.net!=null?' · '+fmtPts(p.last.r.net):''}</td></tr>`).join('')||'<tr><td colspan="7">ไม่มีข้อมูล</td></tr>'}</tbody></table>
+     <h2>4. ผลตรวจรายผู้ควบคุมงาน</h2><table><thead><tr><th>ผู้ควบคุมงาน</th><th>โครงการ</th><th class="c">ตรวจ</th><th class="r">เฉลี่ย</th><th class="c">ผ่าน</th><th class="c">ไม่ผ่าน</th></tr></thead><tbody>${D.sup.map(p=>`<tr><td><b>${esc(p.name)}</b></td><td>${esc([...p.projs].join(', '))}</td><td class="c">${p.n}</td><td class="r ${p.avg==null?'':p.avg>=pm?'pass':'fail'}">${n1(p.avg)}</td><td class="c">${p.pass}</td><td class="c ${p.fail?'fail':''}">${p.fail}</td></tr>`).join('')||'<tr><td colspan="6">ไม่มีข้อมูล</td></tr>'}</tbody></table>
+     ${signHTML(sg.rows)}`;
+    await renderPDF(html,`Audit_Dashboard_${R.from}_${R.to}.pdf`); toast('ดาวน์โหลด PDF Dashboard แล้ว','ok');
+  }catch(e){ console.error(e); toast('สร้าง PDF ไม่สำเร็จ: '+e.message,'error'); } finally{ loading(false); }
+}
 </script>
 <script>
 'use strict';
@@ -1661,8 +2214,37 @@ function thaiBreak(root){
   const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT); const nodes=[]; while(w.nextNode()) nodes.push(w.currentNode);
   nodes.forEach(n=>{ if(/[\u0E00-\u0E7F]/.test(n.nodeValue) && n.parentNode.nodeName!=='STYLE') n.nodeValue=[...seg.segment(n.nodeValue)].map(x=>x.segment).join('\u200B'); });
 }
+/* ---------- Signatories (editable before every export) ---------- */
+function signerDefaults(key){ const s=db.settings; const me={name:s.manager||'',pos:s.role||''};
+  if(key==='audit') return [{label:'จัดทำโดย',...me},{label:'ตรวจสอบโดย',name:'',pos:'Senior'},{label:'อนุมัติโดย',name:'',pos:'Manager'}];
+  return [{label:'จัดทำโดย',...me},{label:'ตรวจสอบโดย',name:'',pos:''},{label:'อนุมัติโดย',name:'',pos:''}]; }
+async function signerDialog({title,key,rows,choices,choice,okLabel,note}){
+  const s=db.settings; s.signers=s.signers||{};
+  rows=rows||(Array.isArray(s.signers[key])&&s.signers[key].length===3?s.signers[key]:signerDefaults(key));
+  const people=[...new Set([s.manager,...peopleList(),...(db.auditCfg?.inspectors||[])].filter(Boolean))];
+  const body=`${choices?`<div class="chips" id="sg-choice" style="margin:4px 0 12px">${choices.map(c=>`<label class="chip ${c.value===choice?'on':''}" style="cursor:pointer"><input type="radio" name="sg-ch" value="${c.value}" ${c.value===choice?'checked':''} style="display:none">${c.label}</label>`).join('')}</div>`:''}
+   ${note?`<div class="small muted" style="margin-bottom:10px">${note}</div>`:''}
+   <div class="small" style="font-weight:600;margin-bottom:6px;color:var(--ink)">ผู้ลงนามในเอกสาร</div>
+   <div style="display:grid;grid-template-columns:110px 1fr 1fr;gap:8px;align-items:center">${rows.map((r,i)=>`<b class="small">${esc(r.label)}</b><input class="inp sm" id="sg-n${i}" value="${esc(r.name)}" placeholder="ชื่อ – สกุล" list="sg-dl"><input class="inp sm" id="sg-p${i}" value="${esc(r.pos)}" placeholder="ตำแหน่ง">`).join('')}</div>
+   <datalist id="sg-dl">${people.map(p=>`<option value="${esc(p)}">`).join('')}</datalist>
+   <div class="small muted" style="margin-top:8px">เว้นว่างได้ – เอกสารจะแสดงเป็นเส้นประให้เซ็นชื่อ · ระบบจำชื่อไว้ใช้ครั้งถัดไป</div>`;
+  const pr=dialog({title,body,actions:[{label:'ยกเลิก',value:null},{label:okLabel||'<i class="fa-solid fa-download"></i> Export',value:'ok',cls:'btn-primary'}]});
+  $('.modal-card').style.maxWidth='560px';
+  const chBox=$('#sg-choice'); if(chBox) chBox.onchange=()=>$$('#sg-choice .chip').forEach(l=>l.classList.toggle('on',l.querySelector('input').checked));
+  const res=await pr; $('.modal-card').style.maxWidth='';
+  if(!res) return null;
+  const out=rows.map((r,i)=>({label:r.label,name:$('#sg-n'+i).value.trim(),pos:$('#sg-p'+i).value.trim()}));
+  if(key){ s.signers[key]=out; touch(); }
+  return {rows:out,choice:choices?($('#sg-choice input:checked')||{}).value:null};
+}
+const signHTML = sg => `<div class="sign">${sg.map(x=>`<div><div class="ln"></div>${esc(x.label)}<br><b>${x.name?esc(x.name):'(.................................)'}</b>${x.pos?`<br>${esc(x.pos)}`:''}<br><span style="font-size:8.5px">วันที่ ......./......./.......</span></div>`).join('')}</div>`;
+const signAOA = sg => [[],['ลงชื่อ'],sg.map(x=>x.label),sg.map(x=>x.name||'(..................................)'),sg.map(x=>x.pos||''),sg.map(()=>'วันที่ ......../......../........')];
+function jobSigners(j){ const s=db.settings, sp=j.signPos||{}; return [{label:`ผู้ปฏิบัติงาน (${s.company})`,name:j.sign.perf||'',pos:sp.perf||''},{label:'ตรวจโดย (Check by)',name:j.sign.check||'',pos:sp.check||'Owner'},{label:'อนุมัติโดย (Approved by)',name:j.sign.approve||'',pos:sp.approve||'Owner'}]; }
+function applyJobSigners(j,rows){ const keys=['perf','check','approve']; j.sign=j.sign||{}; j.signPos=j.signPos||{}; rows.forEach((r,i)=>{ j.sign[keys[i]]=r.name; j.signPos[keys[i]]=r.pos; });
+  if(j.id){ const d=db.jobs.find(x=>x.id===j.id); if(d&&d!==j){ d.sign={...j.sign}; d.signPos={...j.signPos}; } } if(job&&j.id&&job.id===j.id&&job!==j){ job.sign={...j.sign}; job.signPos={...j.signPos}; } touch(); }
+
 async function renderPDF(html,filename,orientation='portrait'){
-  const el=document.createElement('div'); el.className='rpt'; el.style.cssText=`--rb:${db.settings.secondary};--rn:${db.settings.primary};width:${orientation==='portrait'?718:1050}px;background:#fff`;
+  const el=document.createElement('div'); el.className='rpt'; el.style.cssText=`--rb:${db.settings.secondary};--rn:${db.settings.primary};width:${orientation==='portrait'?718:1010}px;background:#fff`;
   el.innerHTML=RPT_CSS+html; thaiBreak(el);
   try{ await document.fonts.ready; }catch(e){}
   const genTxt=`Generated ${new Date().toLocaleString('en-GB')}`;
@@ -1674,6 +2256,7 @@ async function renderPDF(html,filename,orientation='portrait'){
 /* ---------- Executive PDF ---------- */
 async function exportExecutivePDF(f){
   if(!needLib('pdf')) return; f=f||{...ui.dash};
+  const sg=await signerDialog({title:'Export รายงานผู้บริหาร (PDF)',key:'report'}); if(!sg) return;
   loading(true,'กำลังสร้างรายงานผู้บริหาร (PDF)…');
   try{
     const D=computeDash(f); const s=db.settings; const P=computePeople(f).filter(p=>p.n);
@@ -1700,8 +2283,8 @@ async function exportExecutivePDF(f){
      <table><thead><tr><th>วันที่</th><th>Site</th><th>ข้อ</th><th>ปัญหา</th><th>ความรุนแรง</th><th>ผู้รับผิดชอบ</th><th>กำหนดเสร็จ</th><th>สถานะ</th></tr></thead><tbody>${D.jobs.flatMap(x=>(x.j.issues||[]).filter(i=>i.status!=='แก้แล้ว').map(i=>({...i,j:x.j}))).sort((a,b)=>SEVERITY.indexOf(a.sev)-SEVERITY.indexOf(b.sev)).map(i=>`<tr><td>${fmtDate(i.j.info.date)}</td><td>${esc(i.j.info.site)}</td><td>${esc(i.item)}</td><td>${esc(i.prob)}</td><td class="${i.sev==='สูง'?'fail':i.sev==='กลาง'?'wait':''}">${i.sev}</td><td>${esc(i.owner)}</td><td>${i.due?fmtDate(i.due):'—'}</td><td>${i.status}</td></tr>`).join('')||'<tr><td colspan="8">ไม่มีปัญหาค้าง</td></tr>'}</tbody></table>
      <div class="html2pdf__page-break"></div>
      <h2>8. ทะเบียนงาน PM (PM Register)</h2>
-     <table><thead><tr><th>วันที่ทำ PM</th><th>Site</th><th>ทีม</th><th>ผู้ปฏิบัติงาน</th><th class="c">Checklist</th><th class="c">O</th><th class="r">หน้างาน</th><th class="r">Report</th><th class="r">สุทธิ</th><th>สถานะ</th></tr></thead><tbody>${jobs.map(({j,c})=>`<tr><td>${fmtRange(j.info)}</td><td><b>${esc(j.info.site)}</b></td><td>${esc(j.info.team)}</td><td>${esc((j.info.members||[]).join(', '))}</td><td class="c">${c.cl.done}/${CL_TOTAL}</td><td class="c">${c.cl.O||''}</td><td class="r">${c.sc.scored?fmtPts(c.sc.fieldGross):'—'}</td><td class="r">${c.sc.repDone?fmtPts(c.sc.repGross):'—'}</td><td class="r"><b>${c.sc.scored?fmtPts(c.sc.net):'—'}</b></td><td class="${c.sc.status==='PASS'?'pass':c.sc.status==='FAIL'?'fail':'wait'}">${STATUS_TXT[c.sc.status]}</td></tr>`).join('')||'<tr><td colspan="10">ไม่มีงานในช่วงนี้</td></tr>'}</tbody></table>
-     <div class="sign"><div><div class="ln"></div>จัดทำโดย<br><b>${esc(s.manager)}</b><br>${esc(s.role)}</div><div><div class="ln"></div>ตรวจสอบโดย<br>(.................................)</div><div><div class="ln"></div>อนุมัติโดย<br>(.................................)</div></div>`;
+     <table><thead><tr><th>วันที่ทำ PM</th><th>Site</th><th>ทีม</th><th>ผู้ปฏิบัติงาน</th><th class="c">Checklist</th><th class="c">O</th><th class="r">หน้างาน</th><th class="r">Report</th><th class="r">สุทธิ</th><th>สถานะ</th></tr></thead><tbody>${jobs.map(({j,c})=>`<tr><td>${fmtRange(j.info)}</td><td><b>${esc(j.info.site)}</b></td><td>${esc(j.info.team)}</td><td>${esc((j.info.members||[]).join(', '))}</td><td class="c">${c.cl.done}/${c.cl.total}</td><td class="c">${c.cl.O||''}</td><td class="r">${c.sc.scored?fmtPts(c.sc.fieldGross):'—'}</td><td class="r">${c.sc.repDone?fmtPts(c.sc.repGross):'—'}</td><td class="r"><b>${c.sc.scored?fmtPts(c.sc.net):'—'}</b></td><td class="${c.sc.status==='PASS'?'pass':c.sc.status==='FAIL'?'fail':'wait'}">${STATUS_TXT[c.sc.status]}</td></tr>`).join('')||'<tr><td colspan="10">ไม่มีงานในช่วงนี้</td></tr>'}</tbody></table>
+     ${signHTML(sg.rows)}`;
     await renderPDF(html,`${safeName(s.company)}_OM_Executive_Report_${stamp()}.pdf`);
     toast('ดาวน์โหลดรายงาน PDF แล้ว','ok');
   }catch(e){ console.error(e); toast('สร้าง PDF ไม่สำเร็จ: '+e.message,'error'); }
@@ -1712,8 +2295,8 @@ async function exportExecutivePDF(f){
 async function exportJobPDF(ref){
   if(!needLib('pdf')) return;
   const j = typeof ref==='string' ? db.jobs.find(x=>x.id===ref) : ref; if(!j) return;
-  const mode=await dialog({title:'PDF รายงาน PM',body:'เลือกรูปแบบรายงาน<br><span class="small muted">รายงานสำหรับลูกค้าจะไม่แสดงคะแนนประเมินคุณภาพทีมงาน (Scorecard)</span>',actions:[{label:'ยกเลิก',value:null},{label:'<i class="fa-solid fa-user-tie"></i> รายงานภายใน (รวม Scorecard)',value:'internal'},{label:'<i class="fa-solid fa-handshake"></i> สำหรับลูกค้า',value:'customer',cls:'btn-primary'}]});
-  if(!mode) return;
+  const sgr=await signerDialog({title:'Export PM Report (PDF)',rows:jobSigners(j),choices:[{value:'customer',label:'<i class="fa-solid fa-handshake"></i> สำหรับลูกค้า'},{value:'internal',label:'<i class="fa-solid fa-user-tie"></i> รายงานภายใน (รวม Scorecard)'}],choice:'customer',note:'รายงานสำหรับลูกค้าจะไม่แสดงคะแนนประเมินคุณภาพทีมงาน (Scorecard)'});
+  if(!sgr) return; const mode=sgr.choice||'customer'; applyJobSigners(j,sgr.rows);
   loading(true,'กำลังสร้าง PM Report (PDF)…');
   try{
     const s=db.settings, i=j.info, k=jobCalc(j), box=on=>`<span class="box ${on?'on':''}"></span>`;
@@ -1722,12 +2305,12 @@ async function exportJobPDF(ref){
       <h2>4. PM Quality Scorecard (ประเมินคุณภาพทีมงาน – ภายใน)</h2>
       <table class="info"><tr><td class="l">ผู้ประเมิน</td><td>${esc(j.sc.evaluator)}</td><td class="l">วันที่ประเมิน</td><td>${fmtDate(j.sc.evalDate)}</td></tr><tr><td class="l">รูปแบบ Audit</td><td>${AUDIT_TYPES[j.sc.auditType]}</td><td class="l">ผู้ปฏิบัติงาน</td><td>${esc((i.members||[]).join(', '))}</td></tr></table>
       <table style="margin-top:8px"><thead><tr><th>ข้อ</th><th>รายละเอียดงาน</th><th>หลักฐานบังคับแนบ</th><th class="r">เต็ม</th><th class="r">ได้</th><th class="c">หลักฐาน</th><th>Senior Remarks</th></tr></thead><tbody>
-      ${SC.map((c,ci)=>`<tr class="cat"><td colspan="3">${c.id}. ${c.name}</td><td class="r">${fmtPts(c.weight)}</td><td class="r">${fmtPts(k.sc.cats[ci].score)}</td><td colspan="2"></td></tr>`+c.items.map(it=>{const v=j.sc.items[it.no]||{}; return `<tr><td>${it.no}</td><td>${esc(it.task)}</td><td>${esc(it.ev)}</td><td class="r">${fmtPts(it.max)}</td><td class="r"><b>${v.s===''||v.s==null?'—':fmtPts(v.s)}</b></td><td class="c">${v.s===''||v.s==null?'':v.ev===false?'N':'Y'}</td><td>${esc(v.rm||'')}</td></tr>`;}).join('')).join('')}</tbody></table>
+      ${scOrdered(jobScDef(j)).map((c,ci)=>{ const kc=k.sc.cats.find(x=>x.id===c.id)||{score:0,max:0}; return `<tr class="cat"><td colspan="3">${ci+1}. ${esc(c.name)}</td><td class="r">${fmtPts(kc.max)}</td><td class="r">${fmtPts(kc.score)}</td><td colspan="2"></td></tr>`+c.items.map((it,ii)=>{const v=j.sc.items[it.key]||{}; return `<tr><td>${ci+1}.${ii+1}</td><td>${esc(it.task)}</td><td>${esc(it.ev)}</td><td class="r">${fmtPts(it.max)}</td><td class="r"><b>${v.s===''||v.s==null?'—':fmtPts(v.s)}</b></td><td class="c">${v.s===''||v.s==null?'':v.ev===false?'N':'Y'}</td><td>${esc(v.rm||'')}</td></tr>`;}).join(''); }).join('')}</tbody></table>
       ${c5Info(j)}
       <h3 style="margin-top:8px">Penalty Deduction</h3>
       <table><tbody>${PENALTIES.map(p=>`<tr><td style="width:24px">${box(j.sc.pen[p.key])}</td><td><b>${p.name}</b> (${p.th}) – ${esc(p.desc)}</td><td class="r fail">−${p.pts}</td></tr>`).join('')}</tbody></table>${j.sc.penRemark?`<div class="note">หมายเหตุ: ${esc(j.sc.penRemark)}</div>`:''}
-      <div class="score"><div>คุณภาพหน้างาน<b>${fmtPts(k.sc.fieldGross)} / 90</b></div><div>PM Report<b>${k.sc.repDone?fmtPts(k.sc.repGross):'รอ'} / 10</b></div><div>Penalty<b class="fail">${k.sc.ded?'−'+k.sc.ded:'0'}</b></div><div>คะแนนสุทธิ<b>${fmtPts(k.sc.net)} / 100</b></div><div>สถานะ<b class="${k.sc.status==='PASS'?'pass':k.sc.status==='FAIL'?'fail':'wait'}" style="font-size:15px;padding-top:4px">${STATUS_TXT[k.sc.status]}</b></div></div>
-      <div class="note">เกณฑ์ผ่าน: คะแนนสุทธิ ≥ ${s.passMark} · หมวด 1–4 คุณภาพหน้างาน 90 คะแนน + หมวด 5 PM Report พร้อมส่งลูกค้า 10 คะแนน</div>` : '';
+      <div class="score"><div>คุณภาพหน้างาน<b>${fmtPts(k.sc.fieldGross)} / 90</b>${k.sc.fieldMax&&k.sc.fieldMax!==90?`<small style="font-size:8.5px;color:#667085">ดิบ ${fmtPts(k.sc.fieldRaw)}/${fmtPts(k.sc.fieldMax)}</small>`:''}</div><div>PM Report<b>${k.sc.repDone?fmtPts(k.sc.repGross):'รอ'} / 10</b></div><div>Penalty<b class="fail">${k.sc.ded?'−'+k.sc.ded:'0'}</b></div><div>คะแนนสุทธิ<b>${fmtPts(k.sc.net)} / 100</b></div><div>สถานะ<b class="${k.sc.status==='PASS'?'pass':k.sc.status==='FAIL'?'fail':'wait'}" style="font-size:15px;padding-top:4px">${STATUS_TXT[k.sc.status]}</b></div></div>
+      <div class="note">เกณฑ์ผ่าน: คะแนนสุทธิ ≥ ${s.passMark} · คุณภาพหน้างาน (ปรับเป็น 90 คะแนน) + PM Report พร้อมส่งลูกค้า 10 คะแนน</div>` : '';
     const html=`${rptHeader('PREVENTIVE MAINTENANCE REPORT','PM Checklist – Solar Rooftop',`อ้างอิงฟอร์ม F-OM-005 rev.0<br>Site: <b>${esc(i.site)}</b><br>วันที่: <b>${fmtRange(i)}</b>`)}
      <h2>1. ข้อมูลงาน</h2>
      <table class="info"><tr><td class="l">โครงการ / Site</td><td>${esc(i.site)}</td><td class="l">ประเภท</td><td>${esc(i.type)}</td></tr>
@@ -1738,12 +2321,12 @@ async function exportJobPDF(ref){
      <div class="two" style="margin-top:6px"><div class="avoid"><h3>ความปลอดภัย (ก่อนเริ่มงาน) ${k.cl.pre}/${PRE_CHECKS.length}</h3>${PRE_CHECKS.map((t,x)=>`<div style="padding:2px 0">${box(j.pre[x])}${esc(t)}</div>`).join('')}</div>
       <div class="avoid"><h3>ก่อนออกจากหน้างาน (ปิดงาน) ${k.cl.post}/${POST_CHECKS.length}</h3>${POST_CHECKS.map((t,x)=>`<div style="padding:2px 0">${box(j.post[x])}${esc(t)}</div>`).join('')}</div></div>
      <h2>2. Checklist ตรวจ PM – 13 หมวด</h2>
-     <div class="note" style="margin:-3px 0 5px">สรุป: ผ่าน (P) ${k.cl.P} · ไม่ผ่าน (O) ${k.cl.O} · N/A ${k.cl.NA} · ตรวจแล้ว ${k.cl.done}/${CL_TOTAL} ข้อ</div>
+     <div class="note" style="margin:-3px 0 5px">สรุป: ผ่าน (P) ${k.cl.P} · ไม่ผ่าน (O) ${k.cl.O} · N/A ${k.cl.NA} · ตรวจแล้ว ${k.cl.done}/${k.cl.total} ข้อ</div>
      <table><thead><tr><th style="width:30px">ข้อ</th><th>รายการตรวจ</th><th>เกณฑ์ผ่าน / วิธีตรวจ</th><th style="width:62px">ค่าที่วัดได้</th><th class="c" style="width:22px">P</th><th class="c" style="width:22px">O</th><th class="c" style="width:26px">N/A</th><th style="width:110px">หมายเหตุ</th></tr></thead><tbody>
-      ${CL.map(c=>`<tr class="cat"><td colspan="8">หมวด ${c.id} • ${c.name} – ${c.th}</td></tr>`+c.items.map(it=>{const v=j.cl[it.no]||{}; return `<tr class="${v.r==='O'?'o':''}"><td>${it.no}</td><td>${esc(it.task)}</td><td>${esc(it.crit)}</td><td>${v.v?esc(v.v)+' '+(it.unit==='วันที่'?'':esc(it.unit)):''}</td><td class="c">${mark(v.r,'P')}</td><td class="c">${mark(v.r,'O')}</td><td class="c">${mark(v.r,'NA')}</td><td>${esc(v.n||'')}</td></tr>`;}).join('')).join('')}</tbody></table>
+      ${jobCats(j).filter(c=>c.items.length).map(c=>`<tr class="cat"><td colspan="8">หมวด ${c.id} • ${c.name} – ${c.th}</td></tr>`+c.items.map(it=>{const v=j.cl[it.no]||{}; return `<tr class="${v.r==='O'?'o':''}"><td>${it.no}</td><td>${esc(it.task)}</td><td>${esc(it.crit)}</td><td>${v.v?esc(v.v)+' '+(it.unit==='วันที่'?'':esc(it.unit)):''}</td><td class="c">${mark(v.r,'P')}</td><td class="c">${mark(v.r,'O')}</td><td class="c">${mark(v.r,'NA')}</td><td>${esc(v.n||'')}</td></tr>`;}).join('')).join('')}</tbody></table>
      <h2>3. สรุปปัญหาที่พบ</h2>
      <table><thead><tr><th>#</th><th>ข้อ</th><th>อุปกรณ์ / ตำแหน่ง</th><th>ปัญหาที่พบ</th><th>ความรุนแรง</th><th>การแก้ไข</th><th>ผู้รับผิดชอบ</th><th>กำหนดเสร็จ</th><th>สถานะ</th></tr></thead><tbody>${j.issues.map((x,n)=>`<tr><td>${n+1}</td><td>${esc(x.item)}</td><td>${esc(x.loc)}</td><td>${esc(x.prob)}</td><td class="${x.sev==='สูง'?'fail':x.sev==='กลาง'?'wait':''}">${esc(x.sev)}</td><td>${esc(x.act)}</td><td>${esc(x.owner)}</td><td>${x.due?fmtDate(x.due):''}</td><td>${esc(x.status)}</td></tr>`).join('')||'<tr><td colspan="9">ไม่พบปัญหา</td></tr>'}</tbody></table>
-     <div class="sign"><div><div class="ln"></div>ผู้ปฏิบัติงาน (${esc(s.company)})<br><b>${esc(j.sign.perf)||'(.................................)'}</b></div><div><div class="ln"></div>ตรวจโดย (Check by) – Owner<br><b>${esc(j.sign.check)||'(.................................)'}</b></div><div><div class="ln"></div>อนุมัติโดย (Approved by) – Owner<br><b>${esc(j.sign.approve)||'(.................................)'}</b></div></div>
+     ${signHTML(sgr.rows)}
      ${scHTML}`;
     await renderPDF(html,`PM_Report_${safeName(i.site)}_${i.date}${mode==='internal'?'_internal':''}.pdf`);
     toast('ดาวน์โหลด PM Report แล้ว','ok');
@@ -1758,27 +2341,27 @@ function sheetJSON(rows,widths){ const ws=XLSX.utils.json_to_sheet(rows.length?r
 const yn = b => b?'Y':'N';
 
 /* ---------- Full workbook ---------- */
-function exportWorkbook(){
+async function exportWorkbook(){
   if(!needLib('xlsx')) return;
+  const sg=await signerDialog({title:'Export ข้อมูลทั้งหมด (Excel)',key:'report'}); if(!sg) return;
   try{
     const wb=XLSX.utils.book_new(); const s=db.settings; const D=computeDash({period:'all',team:''});
     const sum=[[`${s.company} – O&M Data Export`],[`Exported: ${new Date().toLocaleString('en-GB')}`,'',`โดย: ${s.manager}`],[],
       ['ตัวชี้วัด','ค่า'],['งาน PM ทั้งหมด',D.n],['ประเมินแล้ว',D.ne],['FTQ (%)',D.ftq==null?'':+D.ftq.toFixed(1)],['คะแนนเฉลี่ย',D.avg==null?'':+D.avg.toFixed(1)],['Checklist Pass Rate (%)',D.clPass==null?'':+D.clPass.toFixed(1)],['รอส่ง PM Report',D.pendingReport],['ปัญหาค้าง',D.openIss.length],['CM P1–P2 ค้าง',D.cmOpen12.length],['เกณฑ์ผ่าน',s.passMark],[],
       ['ทีม','งาน PM','ประเมินแล้ว','คะแนนเฉลี่ย','FTQ (%)','Checklist Pass (%)','Rework'],...D.teams.map(t=>[t.team,t.jobs,t.n,t.avg==null?'':+t.avg.toFixed(1),t.pass==null?'':+t.pass.toFixed(0),t.clPass==null?'':+t.clPass.toFixed(1),t.rework])];
-    XLSX.utils.book_append_sheet(wb,sheetAOA(sum,[28,14,14,14,12,18,10]),'Summary');
+    XLSX.utils.book_append_sheet(wb,sheetAOA([...sum,...signAOA(sg.rows)],[28,24,24,14,12,18,10]),'Summary');
     const jobs=[...db.jobs].sort((a,b)=>a.info.date.localeCompare(b.info.date));
     XLSX.utils.book_append_sheet(wb,sheetJSON(jobs.map(j=>{const k=jobCalc(j); const r={'Record ID':j.id,'วันที่เริ่ม':j.info.date,'วันที่แล้วเสร็จ':j.info.endDate||j.info.date,'จำนวนวัน':jobDays(j.info),'Site':j.info.site,'ประเภท':j.info.type,'kWp':num(j.info.capacity),'Inverter':num(j.info.invQty),'ทีม':j.info.team,'ผู้ควบคุมงาน':j.info.supervisor,'ผู้ปฏิบัติงาน':(j.info.members||[]).join(', '),'เวลาเริ่ม':j.info.start,'เวลาเสร็จ':j.info.end,'สภาพอากาศ':j.info.weather.join(', '),
       'Safety ก่อนเริ่ม':`${k.cl.pre}/${PRE_CHECKS.length}`,'ปิดงาน':`${k.cl.post}/${POST_CHECKS.length}`,'Checklist ตรวจแล้ว':k.cl.done,'P':k.cl.P,'O':k.cl.O,'N/A':k.cl.NA,'ปัญหาทั้งหมด':j.issues.length,'ปัญหาค้าง':j.issues.filter(x=>x.status!=='แก้แล้ว').length,
       'ผู้ประเมิน':j.sc.evaluator,'Audit':AUDIT_TYPES[j.sc.auditType],'หน้างาน (/90)':k.sc.scored?k.sc.fieldGross:'','PM Report (/10)':k.sc.repDone?k.sc.repGross:'','Rework (-10)':yn(j.sc.pen.rework),'Audit Fail (-20)':yn(j.sc.pen.audit),'Fraud (-50)':yn(j.sc.pen.fraud),'Penalty':k.sc.ded,'คะแนนสุทธิ':k.sc.scored?k.sc.net:'','สถานะ':STATUS_TXT[k.sc.status],'ผู้ Review':j.sc.reviewer,'ส่งลูกค้า':j.sc.sentDate,'ตัวอย่าง':j.sample?'Y':''}; return r;}),[12,11,13,8,14,13,7,8,11,14,24,8,8,10,9,7,9,5,5,5,8,8,14,18,10,10,9,9,9,7,9,14,12,10,7]),'PM Jobs');
-    const cl=[]; jobs.forEach(j=>CL_ITEMS.forEach(it=>{ const v=j.cl[it.no]; if(!v||(!v.r&&!v.v&&!v.n)) return; cl.push({'Record ID':j.id,'วันที่':j.info.date,'Site':j.info.site,'หมวด':`${it.cat}. ${CL[it.cat-1].name}`,'ข้อ':it.no,'รายการตรวจ':it.task,'เกณฑ์':it.crit,'ค่าที่วัด':v.v||'','หน่วย':it.unit,'ผล':v.r==='NA'?'N/A':v.r||'','หมายเหตุ':v.n||''}); }));
+    const cl=[]; jobs.forEach(j=>jobItems(j).forEach(it=>{ const v=j.cl[it.no]; if(!v||(!v.r&&!v.v&&!v.n)) return; cl.push({'Record ID':j.id,'วันที่':j.info.date,'Site':j.info.site,'หมวด':`${it.cat}. ${CL[it.cat-1].name}`,'ข้อ':it.no,'รายการตรวจ':it.task,'เกณฑ์':it.crit,'ค่าที่วัด':v.v||'','หน่วย':it.unit,'ผล':v.r==='NA'?'N/A':v.r||'','หมายเหตุ':v.n||''}); }));
     XLSX.utils.book_append_sheet(wb,sheetJSON(cl,[12,11,14,24,6,36,40,10,7,6,24]),'Checklist Detail');
     XLSX.utils.book_append_sheet(wb,sheetJSON(allIssues().map(x=>({'Record ID':x.job.id,'วันที่ PM':x.job.info.date,'Site':x.job.info.site,'ข้อ':x.item,'อุปกรณ์/ตำแหน่ง':x.loc,'ปัญหาที่พบ':x.prob,'ความรุนแรง':x.sev,'การแก้ไข':x.act,'ผู้รับผิดชอบ':x.owner,'กำหนดเสร็จ':x.due,'สถานะ':x.status})),[12,11,14,6,18,36,10,30,14,11,11]),'Issues');
-    const scd=[]; jobs.filter(j=>!j.legacy).forEach(j=>SC_ITEMS.forEach(it=>{ const v=j.sc.items[it.no]; if(!v||v.s===''||v.s==null) return; scd.push({'Record ID':j.id,'วันที่':j.info.date,'Site':j.info.site,'ทีม':j.info.team,'ผู้ปฏิบัติงาน':(j.info.members||[]).join(', '),'หมวด':`${it.cat}. ${SC[it.cat-1].name}`,'ข้อ':it.no,'รายละเอียด':it.task,'คะแนนเต็ม':it.max,'คะแนนที่ได้':+v.s,'หลักฐาน':v.ev===false?'N':'Y','Senior Remarks':v.rm||''}); }));
+    const scd=[]; jobs.filter(j=>!j.legacy).forEach(j=>scOrdered(jobScDef(j)).forEach((c,ci)=>c.items.forEach((it,ii)=>{ const v=j.sc.items[it.key]; if(!v||v.s===''||v.s==null) return; scd.push({'Record ID':j.id,'วันที่':j.info.date,'Site':j.info.site,'ทีม':j.info.team,'ผู้ปฏิบัติงาน':(j.info.members||[]).join(', '),'หมวด':`${ci+1}. ${c.name}`,'ข้อ':`${ci+1}.${ii+1}`,'รายละเอียด':it.task,'คะแนนเต็ม':it.max,'คะแนนที่ได้':+v.s,'หลักฐาน':v.ev===false?'N':'Y','Senior Remarks':v.rm||''}); })));
     XLSX.utils.book_append_sheet(wb,sheetJSON(scd,[12,11,14,11,24,28,6,36,9,9,8,24]),'Scorecard Detail');
     XLSX.utils.book_append_sheet(wb,peopleSheet(computePeople({period:'all',team:''})),'People Quality');
     XLSX.utils.book_append_sheet(wb,sheetJSON(db.cm.map(t=>{const sl=slaState(t),due=slaDue(t); return {'Ticket':t.ticket,'Site':t.site,'Priority':t.priority,'ปัญหา':t.issue,'ทีม':t.team,'สถานะ':t.status,'แจ้งเมื่อ':t.reported.replace('T',' '),'SLA (ชม.)':s.sla[t.priority],'กำหนด SLA':due?`${isoDate(due)} ${pad(due.getHours())}:${pad(due.getMinutes())}`:'','ปิดเมื่อ':(t.closed||'').replace('T',' '),'ผล SLA':sl.label,'สาเหตุ/การแก้ไข':t.action};}),[13,14,8,36,11,11,16,8,16,16,14,30]),'CM Tickets');
-    const ro=[]; Object.keys(db.roster).sort().forEach(w=>db.roster[w].forEach(r=>ro.push({'Week':w,'ทีม':r.team,'หัวหน้าทีม':r.leader,'Role':r.role,'จ.':r.mon,'อ.':r.tue,'พ.':r.wed,'พฤ.':r.thu,'ศ.':r.fri,'ส.':r.sat})));
-    XLSX.utils.book_append_sheet(wb,sheetJSON(ro,[10,13,13,18,14,14,14,14,14,14]),'Roster');
+    XLSX.utils.book_append_sheet(wb,sheetJSON(auRows([...(db.audits||[])].sort((a,b)=>a.date.localeCompare(b.date))),[11,10,8,8,26,24,22,18,11,11,16,11,7,10,16,20]),'Audit Plan');
     // hidden full-fidelity data for re-import
     const payload=JSON.stringify({...exportPayload(),settings:{...db.settings,logo:null}}); const chunks=[['GREENERGY_OM_DATA_V2 – do not edit']]; for(let x=0;x<payload.length;x+=30000) chunks.push([payload.slice(x,x+30000)]);
     XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(chunks),'_data');
@@ -1788,12 +2371,13 @@ function exportWorkbook(){
   }catch(e){ console.error(e); toast('ส่งออก Excel ไม่สำเร็จ: '+e.message,'error'); }
 }
 function peopleSheet(P){ return sheetJSON(P.map((p,i)=>({'อันดับ':p.n?i+1:'','ชื่อ':p.name,'ทีม':p.teams,'งานทั้งหมด':p.all,'ประเมินแล้ว':p.n,'คะแนนเฉลี่ย':p.avg==null?'':+p.avg.toFixed(1),'หน้างาน (/90)':p.avgField==null?'':+p.avgField.toFixed(1),'Report (/10)':p.avgRep==null?'':+p.avgRep.toFixed(1),'FTQ (%)':p.passRate==null?'':+p.passRate.toFixed(0),'Rework':p.rework,'Audit Fail':p.audit,'Fraud':p.fraud,'Checklist O':p.O,'งานล่าสุด':p.last})),[7,18,18,10,10,11,12,11,8,8,9,7,10,11]); }
-function exportPeopleExcel(){ if(!needLib('xlsx')) return; const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,peopleSheet(computePeople({period:$('#pf-period').value,team:$('#pf-team').value})),'People Quality'); XLSX.writeFile(wb,`People_Quality_${stamp()}.xlsx`); toast('ส่งออก Excel แล้ว','ok'); }
+async function exportPeopleExcel(){ if(!needLib('xlsx')) return; const sg=await signerDialog({title:'Export คุณภาพรายบุคคล (Excel)',key:'report'}); if(!sg) return; const wb=XLSX.utils.book_new(); const ws=peopleSheet(computePeople({period:$('#pf-period').value,team:$('#pf-team').value})); XLSX.utils.sheet_add_aoa(ws,signAOA(sg.rows),{origin:-1}); XLSX.utils.book_append_sheet(wb,ws,'People Quality'); XLSX.writeFile(wb,`People_Quality_${stamp()}.xlsx`); toast('ส่งออก Excel แล้ว','ok'); }
 
 /* ---------- Per-job Excel (Checklist R.02 layout – re-importable) ---------- */
-function exportJobExcel(ref){
+async function exportJobExcel(ref){
   if(!needLib('xlsx')) return;
   const j = typeof ref==='string' ? db.jobs.find(x=>x.id===ref) : ref; if(!j) return;
+  const sgr=await signerDialog({title:'Export PM Checklist (Excel)',rows:jobSigners(j)}); if(!sgr) return; applyJobSigners(j,sgr.rows);
   const wb=XLSX.utils.book_new(); const i=j.info, s=db.settings, k=jobCalc(j); const ck=b=>b?'☑':'☐';
   const s1=[['PM CHECKLIST – SOLAR ROOFTOP'],['อ้างอิงฟอร์ม F-OM-005 Preventive Maintenance Report rev.0 • ใช้คู่กับรายงาน PM ฉบับเต็ม'],[],['ข้อมูลงาน'],
     ['โครงการ / Site','',i.site],['ประเภท','',i.type],['กำลังติดตั้ง','',i.capacity?`${i.capacity} kWp`:''],['วันที่ทำ PM','',fmtDate(i.date)],['วันที่แล้วเสร็จ','',fmtDate(i.endDate||i.date)],['เวลาเริ่ม – เวลาเสร็จ','',`${i.start||''} – ${i.end||''}`],['ผู้ควบคุมงาน (Supervisor)','',i.supervisor],
@@ -1802,15 +2386,15 @@ function exportJobExcel(ref){
     ['ลงชื่อรับรอง'],['ชื่อ – สกุล','','บริษัท','ลายเซ็น'],[j.sign.perf,'',s.company],['ตรวจโดย (Check by)'],[j.sign.check,'','Owner'],['อนุมัติโดย (Approved by)'],[j.sign.approve,'','Owner']];
   XLSX.utils.book_append_sheet(wb,sheetAOA(s1,[26,60,40,14]),'1.ก่อนเริ่มงาน');
   const s2=[['CHECKLIST ตรวจ PM – ครบ 13 หมวด'],['วิธีกรอก: ติ๊ก ☑ ช่อง P (ผ่าน) / O (ไม่ผ่าน) / N/A (ไม่มีอุปกรณ์นี้) ช่องเดียวต่อข้อ'],['ข้อ','รายการตรวจ (ทำอะไร)','เกณฑ์ผ่าน / วิธีตรวจ','ค่าที่วัดได้','ผ่าน','ไม่ผ่าน','N/A','หมายเหตุ / ตำแหน่งที่พบ']];
-  CL.forEach(c=>{ s2.push([`หมวด ${c.id}  •  ${c.name} – ${c.th}`]); c.items.forEach(it=>{ const v=j.cl[it.no]||{}; s2.push([it.no,it.task,it.crit,v.v?`${v.v} ${it.unit==='วันที่'?'':it.unit}`.trim():it.unit,ck(v.r==='P'),ck(v.r==='O'),ck(v.r==='NA'),v.n||'']); }); s2.push([]); });
+  jobCats(j).forEach(c=>{ s2.push([`หมวด ${c.id}  •  ${c.name} – ${c.th}`]); c.items.forEach(it=>{ const v=j.cl[it.no]||{}; s2.push([it.no,it.task,it.crit,v.v?`${v.v} ${it.unit==='วันที่'?'':it.unit}`.trim():it.unit,ck(v.r==='P'),ck(v.r==='O'),ck(v.r==='NA'),v.n||'']); }); s2.push([]); });
   XLSX.utils.book_append_sheet(wb,sheetAOA(s2,[7,40,46,14,6,7,6,30]),'2.Checklist ตรวจงาน');
   const s4=[['สรุปปัญหาที่พบ (ทุกข้อที่ติ๊ก O – ไม่ผ่าน)'],['ความรุนแรง: สูง = อันตราย/ระบบหยุดจ่ายไฟ ต้องแก้ทันที • กลาง = กระทบประสิทธิภาพ แก้ภายในรอบนี้ • ต่ำ = เฝ้าติดตาม'],['สถานะ : รอดำเนินการ , ยังไม่แก้ , แก้แล้ว'],['#','ข้อ','อุปกรณ์ / ตำแหน่ง','ปัญหาที่พบ','ความรุนแรง','การแก้ไข / สิ่งที่ทำแล้ว','ผู้รับผิดชอบ','กำหนดเสร็จ','สถานะ'],...j.issues.map((x,n)=>[n+1,x.item,x.loc,x.prob,x.sev,x.act,x.owner,x.due,x.status])];
   XLSX.utils.book_append_sheet(wb,sheetAOA(s4,[5,8,20,40,10,34,14,12,12]),'3.สรุปปัญหาที่พบ');
   const s5=[['--- PROJECT INFORMATION ---'],['Project Name:',i.site,'Date:',i.date,'Team Name:',i.team],['Inverter Qty:',i.invQty,'Capacity (kWp):',i.capacity,'Arrival Time:',i.start,'Departure:',i.end],
     ['Evaluator (Senior):',j.sc.evaluator,'Audit Status:',j.sc.auditType==='field'?'[ ] 100% Online  [x] 20% Field Audit':'[x] 100% Online  [ ] 20% Field Audit','Final Score:',k.sc.net,'/ 100'],['PM Crew:',(i.members||[]).join(', ')],
-    ['--- PM QUALITY SCORECARD (หมวด 1–4 = 90 คะแนน, หมวด 5 PM Report = 10 คะแนน) ---'],['Category (หมวดงาน)','Item','Task Description (รายละเอียดงาน)','Mandatory Evidence (หลักฐานบังคับแนบ)','Max Score','Actual Score','Evidence (Y/N)','Senior Remarks']];
-  SC.forEach(c=>c.items.forEach((it,x)=>{ const v=j.sc.items[it.no]||{}; s5.push([x===0?`${c.id}. ${c.name} (${fmtPts(c.weight)})`:'',it.no,it.task,it.ev,it.max,v.s===''||v.s==null?'':+v.s,v.s===''||v.s==null?'':(v.ev===false?'N':'Y'),v.rm||'']); }));
-  s5.push([],['TOTAL GROSS SCORE (คะแนนรวมเบื้องต้น)','','','',100,k.sc.gross],[],['Penalty Type','Description','Condition','Deduction','Penalty Applied','','','Remarks']);
+    ['--- PM QUALITY SCORECARD (คุณภาพหน้างานปรับเป็น 90 คะแนน + PM Report 10 คะแนน) ---'],['Category (หมวดงาน)','Item','Task Description (รายละเอียดงาน)','Mandatory Evidence (หลักฐานบังคับแนบ)','Max Score','Actual Score','Evidence (Y/N)','Senior Remarks','Key']];
+  scOrdered(jobScDef(j)).forEach((c,ci)=>c.items.forEach((it,x)=>{ const v=j.sc.items[it.key]||{}; s5.push([x===0?`${ci+1}. ${c.name}${c.report?' [REPORT]':''}`:'',`${ci+1}.${x+1}`,it.task,it.ev,it.max,v.s===''||v.s==null?'':+v.s,v.s===''||v.s==null?'':(v.ev===false?'N':'Y'),v.rm||'',it.key]); }));
+  s5.push([],['FIELD SCORE (ปรับเป็น 90)','','','',90,k.sc.fieldGross],['PM REPORT SCORE','','','',10,k.sc.repGross],['TOTAL GROSS SCORE (คะแนนรวมเบื้องต้น)','','','',100,k.sc.gross],[],['Penalty Type','Description','Condition','Deduction','Penalty Applied','','','Remarks']);
   PENALTIES.forEach(p=>s5.push([`${p.name} (${p.th})`,p.desc,p.cond,-p.pts,j.sc.pen[p.key]?-p.pts:0,'','',p.key==='rework'?j.sc.penRemark:'']));
   s5.push([],['NET QUALITY SCORE (คะแนนสุทธิหลังหักลบ)','','','',100,k.sc.net],['PASS/FAIL CRITERIA',`(Pass = คะแนนสุทธิ >= ${s.passMark} คะแนน)`,'','STATUS:',STATUS_TXT[k.sc.status]],['PM Report Review by:',j.sc.reviewer,'Review date:',j.sc.reviewDate,'Sent to customer:',j.sc.sentDate]);
   XLSX.utils.book_append_sheet(wb,sheetAOA(s5,[34,10,44,44,10,11,12,26]),'4.PM Scorecard');
@@ -1833,14 +2417,16 @@ async function restoreData(obj,source){
   await maybeSnapshot(true,'ก่อนนำเข้า '+source);
   if(mode==='replace'){ const logo=db.settings.logo; db=incoming; if(!db.settings.logo) db.settings.logo=logo; }
   else{ const up=(arr,inc)=>{ inc.forEach(x=>{ const i=arr.findIndex(y=>y.id===x.id); if(i>=0) arr[i]=x; else arr.push(x); }); };
-    up(db.jobs,incoming.jobs); up(db.cm,incoming.cm); Object.entries(incoming.roster).forEach(([w,r])=>{ if(!db.roster[w]?.length) db.roster[w]=r; });
+    up(db.jobs,incoming.jobs); up(db.cm,incoming.cm); up(db.audits,incoming.audits||[]); Object.entries(incoming.roster).forEach(([w,r])=>{ if(!db.roster[w]?.length) db.roster[w]=r; });
     incoming.settings.teams.forEach(t=>{ const ex=findTeam(t.name); if(!ex) db.settings.teams.push(t); else t.members.forEach(m=>{ if(!ex.members.includes(m)) ex.members.push(m); }); }); const known=new Set(peopleList()); (incoming.settings.unassigned||[]).forEach(p=>{ if(!known.has(p)) db.settings.unassigned.push(p); }); }
   touch(); renderAll(); toast(mode==='replace'?'กู้คืนข้อมูลเรียบร้อย':'รวมข้อมูลเรียบร้อย','ok');
 }
 function readFileText(f){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsText(f); }); }
 async function handleFile(file){
   if(!file) return; const name=file.name.toLowerCase();
-  if(name.endsWith('.json')){ try{ restoreData(JSON.parse(await readFileText(file)),'ไฟล์ '+file.name); }catch(e){ toast('อ่านไฟล์ JSON ไม่สำเร็จ','error'); } return; }
+  if(name.endsWith('.json')){ let o; try{ o=JSON.parse(await readFileText(file)); }catch(e){ toast('อ่านไฟล์ JSON ไม่สำเร็จ','error'); return; }
+    if(isOMBackup(o)){ applySchedule(o.planpm||[],o.records||[],o.holidays||[],'file:'+file.name,true); if(ui.tab!=='audit') go('audit'); return; }
+    restoreData(o,'ไฟล์ '+file.name); return; }
   if(name.endsWith('.xlsx')||name.endsWith('.xls')){ if(!needLib('xlsx')) return; try{ const wb=XLSX.read(await file.arrayBuffer(),{cellDates:true}); await importWorkbook(wb,file.name); }catch(e){ console.error(e); toast('อ่านไฟล์ Excel ไม่สำเร็จ: '+e.message,'error'); } return; }
   toast('รองรับเฉพาะไฟล์ .json และ .xlsx','error');
 }
@@ -1882,13 +2468,16 @@ function parseChecklistWB(wb,j,clName){
       else if(sect==='sign'){ const c=String(r[2]).trim(); if(a && !/ชื่อ – สกุล|ตรวจโดย|อนุมัติโดย/.test(a)){ if(/GREENERGY/i.test(c)||c===db.settings.company) j.sign.perf=a; else if(c==='Owner'){ if(!j.sign.check) j.sign.check=a; else j.sign.approve=a; } } }
     }); }
   const s2=wb.Sheets[clName]; const rows=XLSX.utils.sheet_to_json(s2,{header:1,defval:''});
-  rows.forEach(r=>{ const no=String(r[0]).trim(); const it=CL_ITEMS.find(x=>x.no===no); if(!it) return;
+  if(!Array.isArray(j.clDef)) j.clDef=clone(templateItems());
+  rows.forEach(r=>{ const no=String(r[0]).trim(); if(!/^\d+\.\d+$/.test(no)) return; let it=j.clDef.find(x=>x.no===no)||CL_ITEMS.find(x=>x.no===no);
+    if(!it){ const cat=+no.split('.')[0]; if(!CL.some(c=>c.id===cat)||!String(r[1]).trim()) return; it={no,cat,task:String(r[1]).trim(),crit:String(r[2]||'').trim(),unit:'',range:null,custom:true}; }
+    if(!j.clDef.some(x=>x.no===no)){ j.clDef.push(it); j.clDef.sort((a,b)=>noKey(a.no)-noKey(b.no)); }
     const res=isTick(r[4])?'P':isTick(r[5])?'O':isTick(r[6])?'NA':''; let v=String(r[3]??'').trim(); if(r[3] instanceof Date) v=toISO(r[3]); if(v===it.unit) v=''; else if(it.unit && it.unit!=='วันที่' && it.unit!=='V / A') v=v.replace(it.unit,'').trim();
     j.cl[no]={r:res,v,n:String(r[7]??'').trim()}; });
   const s4=wb.Sheets[wb.SheetNames.find(n=>/สรุปปัญหา/.test(n))||''];
   if(s4){ XLSX.utils.sheet_to_json(s4,{header:1,defval:''}).forEach(r=>{ if(!/^\d+$/.test(String(r[0]).trim())) return; const prob=String(r[3]).trim(); if(!prob||/^ตัวอย่าง/.test(prob)) return;
     j.issues.push({id:uid(),item:String(r[1]).trim(),loc:String(r[2]).trim(),prob,sev:SEVERITY.includes(String(r[4]).trim())?String(r[4]).trim():'กลาง',act:String(r[5]).trim(),owner:String(r[6]).trim(),due:toISO(r[7]),status:ISSUE_STATUS.includes(String(r[8]).trim())?String(r[8]).trim():'รอดำเนินการ',auto:false}); }); }
-  CL_ITEMS.forEach(it=>{ if(j.cl[it.no]?.r==='O' && !j.issues.some(x=>x.item===it.no)) j.issues.push({id:uid(),item:it.no,loc:j.cl[it.no].n||'',prob:it.task+' – ไม่ผ่านเกณฑ์',sev:'กลาง',act:'',owner:j.info.team,due:'',status:'รอดำเนินการ',auto:true}); });
+  jobItems(j).forEach(it=>{ if(j.cl[it.no]?.r==='O' && !j.issues.some(x=>x.item===it.no)) j.issues.push({id:uid(),item:it.no,loc:j.cl[it.no].n||'',prob:it.task+' – ไม่ผ่านเกณฑ์',sev:'กลาง',act:'',owner:j.info.team,due:'',status:'รอดำเนินการ',auto:true}); });
 }
 function parseScorecardWS(ws,j){
   const g=a=>clean(cellV(ws,a));
@@ -1896,10 +2485,17 @@ function parseScorecardWS(ws,j){
   if(!j.info.team) j.info.team=g('F2'); if(!j.info.invQty) j.info.invQty=String(g('B3')); if(!j.info.capacity) j.info.capacity=String(g('D3'));
   if(g('B4')) j.sc.evaluator=g('B4'); if(/\[\s*[xX✓☑]\s*\]\s*20%/.test(String(cellV(ws,'D4')))) j.sc.auditType='field';
   const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+  const keyed=rows.filter(r=>String(r[8]||'').trim() && /^\d+\.\d+$/.test(String(r[1]).trim()) && !isNaN(parseFloat(r[4])));
+  if(keyed.length){ const def=[]; let cur=null;
+    keyed.forEach(r=>{ const lab=String(r[0]).trim(); if(lab||!cur){ const rep=/\[REPORT\]/.test(lab); cur={id:rep?'rep':'c'+uid(),name:lab.replace(/^\d+\.\s*/,'').replace(/\s*\[REPORT\]$/,'')||'หัวข้อ',report:rep,items:[]}; def.push(cur); }
+      cur.items.push({key:String(r[8]).trim(),task:String(r[2]).trim(),ev:String(r[3]).trim(),max:parseFloat(r[4])}); });
+    j.sc.def=def; j.sc.items={};
+    keyed.forEach(r=>{ if(r[5]===''||r[5]==null) return; const v=parseFloat(r[5]); if(isNaN(v)) return; j.sc.items[String(r[8]).trim()]={s:v,ev:!/^n/i.test(String(r[6]).trim()),rm:String(r[7]??'').trim()}; });
+  } else { j.sc.def=defaultScDef(); }
   rows.forEach(r=>{ const a=String(r[0]).trim();
     if(/^PM Crew/i.test(a)){ String(r[1]).split(',').map(x=>x.trim()).filter(Boolean).forEach(m=>{ if(!j.info.members.includes(m)) j.info.members.push(m); }); }
     if(/^PM Report Review/i.test(a)){ j.sc.reviewer=clean(r[1]); j.sc.reviewDate=toISO(r[3]); j.sc.sentDate=toISO(r[5]); }
-    const no=String(r[1]).trim(); const it=SC_ITEMS.find(x=>x.no===no); const mx=parseFloat(r[4]);
+    const no=String(r[1]).trim(); const it=keyed.length?null:SC_ITEMS.find(x=>x.no===no); const mx=parseFloat(r[4]);
     if(it && !isNaN(mx) && r[5]!==''&&r[5]!=null){ let sc=parseFloat(r[5]); if(isNaN(sc)) return; if(Math.abs(mx-it.max)>.01 && mx>0) sc=sc*it.max/mx; sc=Math.min(it.max,Math.max(0,Math.round(sc*2)/2));
       j.sc.items[no]={s:sc,ev:!/^n/i.test(String(r[6]).trim()),rm:String(r[7]??'').trim()}; }
     const pen=PENALTIES.find(p=>a.toLowerCase().startsWith(p.name.toLowerCase())); if(pen){ const v=r[4]; j.sc.pen[pen.key]= (typeof v==='number'&&v!==0) || isTick(v); if(pen.key==='rework'&&r[7]) j.sc.penRemark=String(r[7]); }
@@ -1922,14 +2518,14 @@ function renderReports(){
    <div class="card tile"><div class="ic" style="background:#fdecea;color:#d92d20"><i class="fa-solid fa-file-pdf"></i></div><h4>รายงานผู้บริหาร (PDF)</h4><p>ตัวชี้วัด, กราฟแนวโน้ม, ผลรายทีม, คุณภาพรายบุคคล, CM/ปัญหาค้าง และทะเบียนงาน PM พร้อมช่องลงนาม</p>
     <div class="row"><select class="inp sm" id="rp-period" style="flex:1">${Object.entries(PERIOD_TXT).map(([k,v])=>`<option value="${k}" ${k===ui.dash.period?'selected':''}>${v}</option>`).join('')}</select><select class="inp sm" id="rp-team" style="flex:1">${teamOptions(ui.dash.team,'ทุกทีม')}</select></div>
     <div class="btns"><button class="btn btn-primary" onclick="exportExecutivePDF({period:$('#rp-period').value,team:$('#rp-team').value})"><i class="fa-solid fa-download"></i> สร้าง PDF</button></div></div>
-   <div class="card tile"><div class="ic" style="background:#e7f6ee;color:#16794a"><i class="fa-solid fa-file-excel"></i></div><h4>ข้อมูลทั้งหมด (Excel)</h4><p>9 ชีต: Summary, PM Jobs, Checklist Detail, Issues, Scorecard Detail, People Quality, CM, Roster + ข้อมูลสำหรับนำเข้ากลับ</p>
+   <div class="card tile"><div class="ic" style="background:#e7f6ee;color:#16794a"><i class="fa-solid fa-file-excel"></i></div><h4>ข้อมูลทั้งหมด (Excel)</h4><p>9 ชีต: Summary, PM Jobs, Checklist Detail, Issues, Scorecard Detail, People Quality, CM, Audit Plan + ข้อมูลสำหรับนำเข้ากลับ</p>
     <div class="btns"><button class="btn btn-primary" onclick="exportWorkbook()"><i class="fa-solid fa-download"></i> ส่งออก Excel</button></div></div>
    <div class="card tile"><div class="ic" style="background:var(--navy-l);color:var(--navy)"><i class="fa-solid fa-file-signature"></i></div><h4>PM Report รายงาน</h4><p>รายงานแต่ละงาน PM (PDF สำหรับลูกค้า / ภายใน) และ Excel รูปแบบ Checklist R.02 – เลือกได้จากหน้า “ประวัติงาน PM”</p>
     <div class="btns"><button class="btn" onclick="go('records')"><i class="fa-solid fa-folder-open"></i> ไปที่ประวัติงาน PM</button></div></div>
   </div>
   <h3 style="font-size:15px;margin:24px 0 10px">นำเข้าข้อมูล (Import)</h3>
   <div class="card card-b"><div class="dz" id="dropzone"><i class="fa-solid fa-cloud-arrow-up" style="font-size:26px;color:var(--brand)"></i><div style="margin-top:6px"><b>ลากไฟล์มาวาง หรือคลิกเพื่อเลือกไฟล์</b></div>
-    <div class="small muted" style="margin-top:4px">รองรับ: ไฟล์ Backup (.json) · Excel ที่ส่งออกจากระบบนี้ · PM Checklist R.02 ที่กรอกแล้ว (.xlsx) · PM Quality Scorecard (.xlsx)</div></div></div>
+    <div class="small muted" style="margin-top:4px">รองรับ: ไฟล์ Backup (.json) · ไฟล์ Export JSON จาก Smart O&M (แผน PM) · Excel ที่ส่งออกจากระบบนี้ · PM Checklist R.02 ที่กรอกแล้ว (.xlsx) · PM Quality Scorecard (.xlsx)</div></div></div>
   <h3 style="font-size:15px;margin:24px 0 10px">สำรองและกู้คืนข้อมูล</h3>
   <div class="grid g-3">
    <div class="card tile"><div class="ic" style="background:#e7f6ee;color:var(--brand-d)"><i class="fa-solid fa-download"></i></div><h4>ดาวน์โหลดไฟล์ Backup</h4><p>บันทึกข้อมูลทั้งหมด (รวมโลโก้และการตั้งค่า) เป็นไฟล์ .json – แนะนำทุกสัปดาห์ และเก็บไว้บน Cloud<br><span class="muted">สำรองล่าสุด: ${db.meta.lastBackup?fmtDT(db.meta.lastBackup.slice(0,16)):'ยังไม่เคย'}</span></p>
@@ -1952,9 +2548,9 @@ function renderReports(){
 async function restoreSnap(i){ const sn=readSnaps()[i]; if(!sn) return; if(!(await confirmBox('กู้คืนจุดกู้คืน',`กู้คืนข้อมูล ณ ${new Date(sn.t).toLocaleString('th-TH')} (${sn.jobs} งาน PM)?<br><span class="small muted">ข้อมูลปัจจุบันจะถูกเก็บเป็นจุดกู้คืนก่อน</span>`,'กู้คืน'))) return;
   await maybeSnapshot(true,'ก่อนกู้คืนจุดกู้คืน'); const logo=db.settings.logo; db=normalize(sn.data); db.settings.logo=logo; touch(); renderAll(); toast('กู้คืนเรียบร้อย','ok'); }
 async function resetAll(){
-  const a=await dialog({title:'ล้างข้อมูลทั้งหมด',body:'ข้อมูลทั้งหมดในเครื่องนี้จะถูกลบ (งาน PM, CM, Roster) – <b>ควรดาวน์โหลด Backup ก่อน</b>',actions:[{label:'ยกเลิก',value:null},{label:'ดาวน์โหลด Backup ก่อน',value:'bk'},{label:'ลบทั้งหมด',value:'del',cls:'btn-danger'}]});
+  const a=await dialog({title:'ล้างข้อมูลทั้งหมด',body:'ข้อมูลทั้งหมดในเครื่องนี้จะถูกลบ (งาน PM, CM, แผนตรวจ) – <b>ควรดาวน์โหลด Backup ก่อน</b>',actions:[{label:'ยกเลิก',value:null},{label:'ดาวน์โหลด Backup ก่อน',value:'bk'},{label:'ลบทั้งหมด',value:'del',cls:'btn-danger'}]});
   if(a==='bk'){ downloadBackup(); return; } if(a!=='del') return;
-  maybeSnapshot(true,'ก่อนล้างข้อมูลทั้งหมด'); const settings=db.settings; db=defaultDB(); db.settings=settings; seedRoster(isoWeek()); job=newJobObj(); dirty=false; try{ localStorage.removeItem(DRAFT_KEY); }catch(e){}
+  maybeSnapshot(true,'ก่อนล้างข้อมูลทั้งหมด'); const settings=db.settings; db=defaultDB(); db.settings=settings; job=newJobObj(); dirty=false; try{ localStorage.removeItem(DRAFT_KEY); }catch(e){}
   touch(); renderAll(); toast('ล้างข้อมูลแล้ว (การตั้งค่าและโลโก้ยังอยู่)','ok');
 }
 
@@ -1997,7 +2593,7 @@ function renderSettings(){
 function teamMgrHTML(){
   const s=db.settings; const total=peopleList().length;
   const moveOpts=i=>s.teams.map((x,xi)=>xi===i?'':`<option value="${xi}">${esc(x.name||'ทีม '+(xi+1))}</option>`).join('');
-  return `<div class="card" id="team-mgr"><div class="card-h" style="flex-wrap:wrap"><h3><i class="fa-solid fa-people-group" style="color:var(--brand)"></i> ทีมและรายชื่อทีมงาน</h3><span class="sub">${s.teams.length} ทีม · ${total} คน · ใช้ในบันทึกงาน PM, Roster, งาน CM และรายงาน</span>
+  return `<div class="card" id="team-mgr"><div class="card-h" style="flex-wrap:wrap"><h3><i class="fa-solid fa-people-group" style="color:var(--brand)"></i> ทีมและรายชื่อทีมงาน</h3><span class="sub">${s.teams.length} ทีม · ${total} คน · ใช้ในบันทึกงาน PM, งาน CM และรายงาน</span>
     <div class="right"><button class="btn btn-sm btn-primary" data-tm="addteam"><i class="fa-solid fa-plus"></i> เพิ่มทีม</button></div></div>
    <div class="card-b"><div class="team-grid">
     ${s.teams.map((t,i)=>`<div class="team-card" data-ti="${i}">
@@ -2020,7 +2616,7 @@ function teamMgrHTML(){
     <div class="row mt" style="align-items:flex-start"><textarea class="inp" id="tm-bulk" rows="4" style="flex:1;min-width:220px" placeholder="วางรายชื่อ บรรทัดละ 1 คน (คัดลอกจาก Excel ได้)"></textarea>
      <div style="display:flex;flex-direction:column;gap:8px"><select class="inp sm" id="tm-bulk-team">${s.teams.map((x,xi)=>`<option value="${xi}">${esc(x.name)}</option>`).join('')}<option value="u">ไม่สังกัดทีม</option></select><button class="btn btn-sm btn-primary" data-tm="bulk"><i class="fa-solid fa-user-plus"></i> เพิ่มทั้งหมด</button></div></div></details>
    <datalist id="dl-unassigned">${s.unassigned.map(p=>`<option value="${esc(p)}">`).join('')}</datalist>
-   <div class="small muted mt"><i class="fa-solid fa-circle-info"></i> กด ★ เพื่อตั้งหัวหน้าทีม (ใช้เป็นผู้ควบคุมงานและหัวหน้าทีมใน Roster อัตโนมัติ) · เปลี่ยนชื่อทีมแล้วระบบจะอัปเดตชื่อทีมในงาน PM, CM และ Roster ให้ · ลบรายชื่อออกจากระบบจะไม่ลบประวัติคะแนนในงานเดิม</div>
+   <div class="small muted mt"><i class="fa-solid fa-circle-info"></i> กด ★ เพื่อตั้งหัวหน้าทีม (ใช้เป็นผู้ควบคุมงานอัตโนมัติเมื่อเลือกทีมในงาน PM) · เปลี่ยนชื่อทีมแล้วระบบจะอัปเดตชื่อทีมในงาน PM และ CM ให้ · ลบรายชื่อออกจากระบบจะไม่ลบประวัติคะแนนในงานเดิม</div>
   </div></div>`;
 }
 function tmRefresh(){ touch(); const y=$('#content').scrollTop; renderSettings(); $('#content').scrollTop=y; }
@@ -2076,7 +2672,7 @@ function setLogo(url){ db.settings.logo=url; touch(); applyBranding(); renderSet
 /* =====================================================================
    INIT
    ===================================================================== */
-function normJob(j){ const b=newJobObj(); j={...j}; delete j.dc; return {...b,...j,info:{...b.info,...(j.info||{}),members:j.info?.members||[]},sign:{...b.sign,...(j.sign||{})},sc:{...b.sc,...(j.sc||{}),pen:{...b.sc.pen,...(j.sc?.pen||{})},items:j.sc?.items||{}},issues:j.issues||[],cl:j.cl||{},pre:j.pre||b.pre,post:j.post||b.post}; }
+function normJob(j){ const b=newJobObj(); j={...j}; delete j.dc; return {...b,...j,info:{...b.info,...(j.info||{}),members:j.info?.members||[]},sign:{...b.sign,...(j.sign||{})},sc:{...b.sc,...(j.sc||{}),def:Array.isArray(j.sc?.def)?j.sc.def:(j.id?defaultScDef():b.sc.def),pen:{...b.sc.pen,...(j.sc?.pen||{})},items:j.sc?.items||{}},clDef:Array.isArray(j.clDef)?j.clDef:(j.id?clone(CL_ITEMS):b.clDef),issues:j.issues||[],cl:j.cl||{},pre:j.pre||b.pre,post:j.post||b.post}; }
 async function init(){
   await loadDB(); await loadSnaps();
   try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
@@ -2101,6 +2697,7 @@ async function init(){
   document.addEventListener('keydown',e=>{ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){ e.preventDefault(); if(ui.tab==='pm') saveJob(); else { persist(); downloadBackup(); } } });
   setSaveState('ok'); updateBadges();
   if(!window.Chart||!window.XLSX||!window.html2pdf) toast('บางไลบรารีโหลดไม่สำเร็จ (ต้องต่ออินเทอร์เน็ต) – การบันทึกข้อมูลยังใช้งานได้ตามปกติ','warn');
+  auCfg(); calAutoStart();
   go(location.hash.slice(1)||'dashboard');
   if(dirty) toast('กู้คืนแบบร่างงาน PM ที่ยังไม่ได้บันทึกแล้ว','warn');
 }
