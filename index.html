@@ -12,7 +12,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <style>
 :root{
   --brand:#35654E; --navy:#35654E; --accent:#A9947A; --moss:#789474; --linen:#E2E0D8; --neutral:#BCBEC0;
@@ -397,7 +397,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
     </nav>
     <div class="side-foot">
       <div class="avatar" id="u-av">A</div>
-      <div style="min-width:0"><div class="u-name" id="u-name"></div><div class="u-role" id="u-role"></div></div>
+      <div style="min-width:0"><div class="u-name" id="u-name"></div><div class="u-role" id="u-role"></div><div id="app-ver" style="font-size:10px;color:rgba(226,224,216,.5);margin-top:2px"></div></div>
     </div>
   </aside>
   <div class="scrim" onclick="toggleNav(false)"></div>
@@ -552,7 +552,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 /* =====================================================================
    GREENERGY O&M DASHBOARD  –  single-file app (localStorage + backups)
    ===================================================================== */
-const APP_VER = '2.0';
+const APP_VER = '2.4 (15/11/2569)';
 const STORE_KEY = 'greenergy_om_v2', SNAP_KEY = 'greenergy_om_snapshots', DRAFT_KEY = 'greenergy_om_draft', LEGACY_KEY = 'greenergyData', FILEW_KEY = 'greenergy_om_filewrite';
 
 /* ---------- Reference data: PM Checklist R.02 (F-OM-005) ---------- */
@@ -1025,6 +1025,7 @@ function applyBranding(){
   $('#brandbox').innerHTML = s.logo
     ? `<div class="brand-logo"><img src="${s.logo}" alt="${esc(s.company)}"></div><div class="brand-sub">O&amp;M MANAGEMENT SYSTEM</div>`
     : `<div class="brand-wordmark"><img src="${LOGO_WHITE}" alt="${esc(s.company)}"></div><div class="brand-sub">${esc(s.tagline)} · O&amp;M SYSTEM</div>`;
+  const vb=$('#app-ver'); if(vb) vb.textContent='v'+APP_VER;
   $('#u-name').textContent=s.manager; $('#u-role').textContent=s.role; $('#u-av').textContent=(s.manager||'?').trim().charAt(0).toUpperCase();
   document.title=`${s.company} O&M Dashboard`;
   const fav=$('#favicon'); if(fav) fav.href=LOGO_MARK;
