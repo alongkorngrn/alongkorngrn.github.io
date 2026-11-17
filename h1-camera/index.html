@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1220">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="เตือนกล้อง ทล.1">
+<title>เตือนกล้องความเร็ว ทล.1 ลำปาง–กทม.</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="vendor/leaflet.css">
+<style>
+:root{
+  --bg:#0b1220; --panel:#111a2e; --panel2:#17223b; --line:#26324d; --text:#e8eefc; --mut:#93a3c4;
+  --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444; --acc:#3b82f6;
+  --st:env(safe-area-inset-top,0px); --sb:env(safe-area-inset-bottom,0px);
+  --navh:58px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:"Sarabun","Noto Sans Thai","Leelawadee UI",system-ui,-apple-system,sans-serif;font-size:15px;overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer}
+input,select,textarea{font:inherit}
+#map{position:fixed;inset:0;bottom:calc(var(--navh) + var(--sb));background:#1b2436}
+.leaflet-container{background:#1b2436;font-family:inherit}
+.leaflet-control-attribution{font-size:10px;background:rgba(11,18,32,.6)!important;color:#9fb0d0!important}
+.leaflet-control-attribution a{color:#9fb0d0!important}
+.leaflet-bottom{bottom:200px}
+a.btn{text-decoration:none;color:inherit;display:inline-block}
+#credit{text-align:center;font-size:10.5px;color:var(--mut);margin-top:6px;letter-spacing:.2px}
+
+/* top bar */
+#top{position:fixed;left:8px;right:8px;top:calc(var(--st) + 8px);display:flex;gap:6px;align-items:center;z-index:500;pointer-events:none}
+.pill{pointer-events:auto;background:rgba(17,26,46,.92);border:1px solid var(--line);border-radius:999px;padding:6px 11px;font-size:13px;display:flex;align-items:center;gap:6px;white-space:nowrap;backdrop-filter:blur(6px)}
+.dot{width:9px;height:9px;border-radius:50%;background:#64748b}
+.dot.on{background:var(--ok);box-shadow:0 0 8px var(--ok)} .dot.wait{background:var(--warn)} .dot.err{background:var(--bad)}
+#kmPill b{font-size:15px}
+#vehPill{margin-left:auto;max-width:42vw;overflow:hidden;text-overflow:ellipsis}
+
+/* right fabs */
+#fabs{position:fixed;right:10px;top:calc(var(--st) + 56px);display:flex;flex-direction:column;gap:8px;z-index:500}
+.fab{width:46px;height:46px;border-radius:14px;border:1px solid var(--line);background:rgba(17,26,46,.94);font-size:20px;display:grid;place-items:center;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.fab.active{background:var(--acc);border-color:var(--acc)}
+.fab small{font-size:10px;display:block;line-height:1}
+
+/* HUD */
+#hud{position:fixed;left:8px;right:8px;bottom:calc(var(--navh) + var(--sb) + 8px);display:flex;gap:8px;align-items:flex-end;z-index:500;pointer-events:none}
+#speedo{pointer-events:auto;width:118px;height:118px;flex:none;border-radius:50%;background:radial-gradient(circle at 50% 40%,#18233d,#0b1220);border:7px solid var(--ok);display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;box-shadow:0 6px 20px rgba(0,0,0,.5)}
+#speedo.over{border-color:var(--bad);animation:pulse 0.8s infinite}
+#speedo.near{border-color:var(--warn)}
+#spd{font-size:44px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+#speedo small{font-size:11px;color:var(--mut)}
+#limit{position:absolute;right:-8px;top:-8px;width:40px;height:40px;border-radius:50%;background:#fff;color:#111;border:5px solid var(--bad);display:grid;place-items:center;font-weight:800;font-size:15px}
+#next{pointer-events:auto;flex:1;min-width:0;background:rgba(17,26,46,.95);border:1px solid var(--line);border-radius:16px;padding:10px 12px;box-shadow:0 6px 20px rgba(0,0,0,.45)}
+#next .row{display:flex;align-items:center;gap:8px}
+#next .ic{font-size:26px;flex:none}
+#next .t{font-size:13px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#next .km{font-weight:700}
+#next .dist{margin-left:auto;font-size:24px;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
+.bar{height:6px;background:#22304f;border-radius:6px;margin-top:8px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--ok);transition:width .4s}
+#startBtn{width:100%;border:0;border-radius:12px;padding:12px;font-size:18px;font-weight:700;background:var(--ok);color:#06240f;margin-top:8px}
+#startBtn.stop{background:#334155;color:#fff}
+.est{font-size:11px;color:var(--warn)}
+
+/* nav */
+#nav{position:fixed;left:0;right:0;bottom:0;height:calc(var(--navh) + var(--sb));padding-bottom:var(--sb);background:#0d1527;border-top:1px solid var(--line);display:flex;z-index:900}
+#nav button{flex:1;background:none;border:0;color:var(--mut);font-size:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+#nav button span{font-size:20px}
+#nav button.on{color:#fff}
+
+/* sheets */
+.sheet{position:fixed;inset:0;bottom:calc(var(--navh) + var(--sb));background:var(--bg);z-index:800;display:none;flex-direction:column}
+.sheet.show{display:flex}
+.sheet header{padding:calc(var(--st) + 12px) 14px 10px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line);background:var(--panel)}
+.sheet header h2{margin:0;font-size:18px;flex:1}
+.sheet .body{overflow:auto;padding:12px 14px 30px;flex:1;-webkit-overflow-scrolling:touch}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px}
+.card h3{margin:0 0 8px;font-size:15px}
+.btn{border:1px solid var(--line);background:var(--panel2);border-radius:10px;padding:9px 12px;font-size:14px}
+.btn.p{background:var(--acc);border-color:var(--acc);color:#fff}
+.btn.g{background:var(--ok);border-color:var(--ok);color:#052e16;font-weight:700}
+.btn.r{background:#3a1520;border-color:#7f1d1d;color:#fecaca}
+.btn.s{padding:6px 9px;font-size:13px}
+.btns{display:flex;flex-wrap:wrap;gap:6px}
+label.f{display:block;margin:8px 0 3px;color:var(--mut);font-size:13px}
+.in{width:100%;background:#0b1325;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.sw{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid #1d2840;gap:10px}
+.sw:last-child{border-bottom:0}
+.sw input[type=checkbox]{width:22px;height:22px;flex:none}
+.muted{color:var(--mut);font-size:13px}
+.chip{display:inline-block;font-size:11px;padding:2px 7px;border-radius:999px;background:#22304f;color:#cbd5e1}
+.chip.ok{background:#14532d;color:#bbf7d0}.chip.est{background:#422006;color:#fde68a}.chip.off{background:#3f3f46;color:#d4d4d8}
+.camrow{display:flex;gap:10px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:var(--panel)}
+.camrow .ic{font-size:24px;width:34px;text-align:center}
+.camrow .mid{flex:1;min-width:0}
+.camrow .mid b{font-size:15px}
+.camrow .mid div{font-size:13px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.camrow.dis{opacity:.45}
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t td,table.t th{padding:6px 4px;border-bottom:1px solid #1d2840;text-align:left}
+
+/* map markers */
+.cm{display:flex;align-items:center;gap:2px;background:#fff;color:#111;border:3px solid var(--c);border-radius:14px;padding:1px 6px 1px 3px;font-size:12px;font-weight:700;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.5)}
+.cm span{font-size:15px}
+.cm.est{border-style:dashed}
+.cm.dis{opacity:.4}
+.me{width:34px;height:34px;display:grid;place-items:center}
+.me svg{filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
+.kmlab{color:#cbd5e1;font-size:10px;font-weight:700;text-shadow:0 0 3px #000,0 0 3px #000;white-space:nowrap}
+.leaflet-popup-content-wrapper{background:var(--panel);color:var(--text);border-radius:12px}
+.leaflet-popup-tip{background:var(--panel)}
+.leaflet-popup-content{margin:10px 12px;font-size:14px;min-width:210px}
+.pop img{width:100%;border-radius:8px;margin:6px 0;max-height:220px;object-fit:cover}
+
+/* alert */
+#alert{position:fixed;left:8px;right:8px;top:calc(var(--st) + 8px);z-index:1500;display:none;border-radius:18px;padding:12px;background:#7f1d1d;border:3px solid #fca5a5;box-shadow:0 10px 40px rgba(0,0,0,.6)}
+#alert.show{display:block;animation:pop .25s}
+#alert.l0{background:#713f12;border-color:#fde047}
+#alert.l1{background:#7c2d12;border-color:#fdba74}
+#alert.l2{background:#7f1d1d;border-color:#fca5a5;animation:pop .25s, flash 0.7s infinite}
+#alert .row{display:flex;gap:10px;align-items:center}
+#alert .big{font-size:40px}
+#alert h4{margin:0;font-size:22px;line-height:1.15}
+#alert p{margin:4px 0 0;font-size:15px}
+#alert img{width:84px;height:84px;object-fit:cover;border-radius:10px;flex:none;border:2px solid rgba(255,255,255,.6)}
+#alert .d{font-size:34px;font-weight:900;font-variant-numeric:tabular-nums}
+#alert .btns{margin-top:10px}
+#alert .btn{background:rgba(0,0,0,.25);border-color:rgba(255,255,255,.35);color:#fff}
+@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:none;opacity:1}}
+@keyframes flash{50%{box-shadow:0 0 0 6px rgba(239,68,68,.6),0 10px 40px rgba(0,0,0,.6)}}
+@keyframes pulse{50%{box-shadow:0 0 0 8px rgba(239,68,68,.45)}}
+
+/* modal */
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;display:none;align-items:flex-end;justify-content:center}
+#modal.show{display:flex}
+#modal .box{background:var(--panel);border:1px solid var(--line);border-radius:18px 18px 0 0;width:100%;max-width:560px;max-height:88vh;overflow:auto;padding:16px 16px calc(16px + var(--sb))}
+#modal h3{margin:0 0 6px}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--navh) + var(--sb) + 140px);background:#0f172a;border:1px solid var(--line);padding:9px 14px;border-radius:12px;z-index:2500;display:none;max-width:90vw;text-align:center;font-size:14px}
+#toast.show{display:block}
+#simBadge{display:none;background:#7c3aed;color:#fff;border-color:#7c3aed}
+#simBadge.show{display:flex}
+.kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.kpi div{background:var(--panel2);border-radius:10px;padding:8px;text-align:center}
+.kpi b{display:block;font-size:20px}
+.kpi span{font-size:11px;color:var(--mut)}
+.warnbox{background:#422006;border:1px solid #92400e;color:#fde68a;border-radius:12px;padding:10px;font-size:13px;margin-bottom:10px}
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<div id="top">
+  <div class="pill" id="gpsPill"><i class="dot" id="gpsDot"></i><span id="gpsTxt">GPS ปิด</span></div>
+  <div class="pill" id="kmPill"><span>ทล.1</span><b id="kmTxt">กม. –</b></div>
+  <div class="pill" id="simBadge">🧪 จำลอง</div>
+  <div class="pill" id="vehPill">🚗 <span id="vehTxt">ยังไม่ระบุรถ</span></div>
+</div>
+
+<div id="fabs">
+  <button class="fab" id="fLayer" title="ชั้นแผนที่">🗺️</button>
+  <button class="fab active" id="fFollow" title="ติดตามตำแหน่ง">🎯</button>
+  <button class="fab" id="fKm" title="บันทึกหลัก กม. ตรงนี้"><div>📍<small>กม.</small></div></button>
+  <button class="fab" id="fAdd" title="เพิ่มจุดตรงนี้">➕</button>
+  <button class="fab" id="fGmap" title="เปิด Google Maps จราจร">🚦</button>
+</div>
+
+<div id="hud">
+  <div id="speedo"><div id="spd">0</div><small>กม./ชม.</small><div id="limit">90</div></div>
+  <div id="next">
+    <div class="row"><div class="ic" id="nIc">📷</div>
+      <div style="min-width:0"><div class="km" id="nKm">จุดถัดไป</div><div class="t" id="nT">กด “เริ่มเดินทาง” เพื่อเปิด GPS</div></div>
+      <div class="dist" id="nD">–</div></div>
+    <div class="bar"><i id="nBar"></i></div>
+    <button id="startBtn">▶ เริ่มเดินทาง</button>
+    <div id="credit">สร้างและแก้ไขโดย Alongkorn Inta</div>
+  </div>
+</div>
+
+<div id="alert"><div class="row"><div class="big" id="aIc">📷</div><div style="flex:1;min-width:0"><div class="d" id="aD">500 ม.</div><h4 id="aT">กล้องตรวจจับความเร็ว</h4><p id="aS"></p></div><img id="aImg" alt=""></div>
+  <div class="btns"><button class="btn s" id="aPin">📍 กล้องอยู่ตรงนี้ (ยืนยันตำแหน่ง)</button><button class="btn s" id="aClose">ปิด</button></div></div>
+
+<!-- Sheets -->
+<section class="sheet" id="sh-cams"><header><h2>📷 จุดกล้อง / จุดชะลอ</h2><button class="btn s p" id="camAdd">＋ เพิ่ม</button></header>
+  <div class="body"><div class="warnbox" id="calibNote"></div>
+    <input class="in" id="camSearch" placeholder="ค้นหา กม. หรือคำอธิบาย…" style="margin-bottom:10px">
+    <div id="camList"></div></div></section>
+
+<section class="sheet" id="sh-veh"><header><h2>🚗 รถ & คนขับ</h2></header><div class="body" id="vehBody"></div></section>
+<section class="sheet" id="sh-log"><header><h2>🧾 บันทึกการเดินทาง</h2></header><div class="body" id="logBody"></div></section>
+<section class="sheet" id="sh-set"><header><h2>⚙️ ตั้งค่า</h2><span class="muted" id="savedAt"></span></header><div class="body" id="setBody"></div></section>
+
+<nav id="nav">
+  <button data-tab="map" class="on"><span>🗺️</span>ขับ</button>
+  <button data-tab="cams"><span>📷</span>จุดกล้อง</button>
+  <button data-tab="veh"><span>🚗</span>รถ/คนขับ</button>
+  <button data-tab="log"><span>🧾</span>บันทึก</button>
+  <button data-tab="set"><span>⚙️</span>ตั้งค่า</button>
+</nav>
+
+<div id="modal"><div class="box" id="mbox"></div></div>
+<div id="toast"></div>
+
+<script src="vendor/leaflet.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
